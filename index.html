@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>S A Yoga Classes — Diet Planner</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --teal:#0F4C4C;--teal-mid:#1A6B6B;--teal-light:#E8F4F4;--teal-soft:#5A9A9A;
+    --gold:#C9A84C;--gold-light:#FBF4E0;--gold-dark:#8B6E1E;
+    --white:#FFFFFF;--off-white:#F7FAF9;
+    --gray-100:#F1F5F4;--gray-200:#E2EBE9;--gray-400:#8FA8A5;--gray-600:#4A6865;--gray-800:#1E3432;
+    --danger:#C0392B;--danger-light:#FDEDEC;
+    --radius:10px;--radius-lg:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--off-white);color:var(--gray-800);min-height:100vh;}
+  header{background:var(--teal);}
+  .header-inner{max-width:860px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;gap:18px;}
+  .header-text h1{font-size:22px;font-weight:700;color:var(--white);letter-spacing:1px;font-family:Georgia,serif;}
+  .header-text p{font-size:12px;color:var(--teal-soft);letter-spacing:2px;margin-top:2px;font-family:Georgia,serif;}
+  .header-divider{border:none;border-top:1px solid var(--gold);opacity:.4;margin:0;}
+  .nav-bar{background:var(--teal-mid);}
+  .nav-inner{max-width:860px;margin:0 auto;padding:10px 24px;font-size:12px;color:rgba(255,255,255,.7);letter-spacing:1px;}
+  .nav-inner span{color:var(--gold);font-weight:600;}
+  main{max-width:860px;margin:0 auto;padding:32px 24px 60px;}
+  .section-label{font-size:11px;font-weight:700;color:var(--teal-soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;margin-top:28px;display:flex;align-items:center;gap:8px;}
+  .section-label::after{content:'';flex:1;height:1px;background:var(--gray-200);}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .grid-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+  @media(max-width:600px){.grid-3,.grid-4{grid-template-columns:1fr 1fr;}}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:12px;font-weight:600;color:var(--gray-600);text-transform:uppercase;letter-spacing:.05em;}
+  .field input,.field select,.field textarea{width:100%;padding:10px 12px;font-size:14px;border:1.5px solid var(--gray-200);border-radius:var(--radius);background:var(--white);color:var(--gray-800);outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit;}
+  .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--teal-mid);box-shadow:0 0 0 3px rgba(15,76,76,.1);}
+  .field input::placeholder{color:var(--gray-400);}
+  .field-hint{font-size:11px;color:var(--gray-400);margin-top:3px;}
+  .range-tag{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;display:inline-block;margin-top:3px;}
+  .range-low{background:#FEF3C7;color:#92400E;}
+  .range-normal{background:#D1FAE5;color:#065F46;}
+  .range-high{background:#FEE2E2;color:#991B1B;}
+  .conditions-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .condition-chip{display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:var(--radius);cursor:pointer;background:var(--white);transition:all .15s;user-select:none;}
+  .condition-chip:hover{border-color:var(--teal-soft);background:var(--teal-light);}
+  .condition-chip.active{background:var(--teal-light);border-color:var(--teal-mid);}
+  .condition-chip input{display:none;}
+  .chip-icon{width:28px;height:28px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .chip-label{font-size:13px;color:var(--gray-600);font-weight:500;}
+  .condition-chip.active .chip-label{color:var(--teal);font-weight:600;}
+  .generate-btn{margin-top:28px;width:100%;padding:15px 24px;font-size:16px;font-weight:700;letter-spacing:.5px;background:var(--teal);color:var(--white);border:none;border-radius:var(--radius);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;font-family:inherit;}
+  .generate-btn:hover{background:var(--teal-mid);}
+  .generate-btn:disabled{background:var(--gray-400);cursor:not-allowed;}
+  .error-msg{display:none;margin-top:10px;padding:10px 14px;background:var(--danger-light);border-left:3px solid var(--danger);border-radius:var(--radius);font-size:13px;color:var(--danger);}
+  .result-card{display:none;margin-top:32px;background:var(--white);border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;}
+  .result-card.visible{display:block;}
+  .result-header{background:var(--teal);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;}
+  .result-header h2{font-size:15px;font-weight:700;color:var(--white);font-family:Georgia,serif;}
+  .result-badge{font-size:10px;font-weight:700;letter-spacing:1px;background:var(--gold);color:var(--teal);padding:3px 10px;border-radius:20px;}
+  .result-body{padding:22px;}
+  .result-content{font-size:14px;line-height:1.85;color:var(--gray-800);white-space:pre-wrap;}
+  .supp-section{margin-top:20px;padding:16px;background:var(--gold-light);border:1.5px solid var(--gold);border-radius:var(--radius);}
+  .supp-title{font-size:13px;font-weight:700;color:var(--gold-dark);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+  .supp-list{display:flex;flex-direction:column;gap:8px;}
+  .supp-item{background:var(--white);border:1px solid var(--gray-200);border-radius:8px;padding:10px 14px;}
+  .supp-name{font-size:13px;font-weight:700;color:var(--teal);}
+  .supp-detail{font-size:12px;color:var(--gray-600);margin-top:3px;line-height:1.5;}
+  .action-row{display:flex;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--gray-200);}
+  .pdf-btn{flex:1;padding:12px;font-size:14px;font-weight:600;border:2px solid var(--gold);border-radius:var(--radius);background:var(--gold-light);color:var(--gold-dark);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;font-family:inherit;}
+  .pdf-btn:hover{background:var(--gold);color:var(--white);}
+  .pdf-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .new-btn{padding:12px 20px;font-size:14px;font-weight:600;border:1.5px solid var(--gray-200);border-radius:var(--radius);background:var(--white);color:var(--gray-600);cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;font-family:inherit;}
+  .new-btn:hover{border-color:var(--teal-soft);color:var(--teal);}
+  .disclaimer{margin-top:14px;padding:12px 16px;background:var(--gray-100);border-radius:var(--radius);font-size:12px;color:var(--gray-600);line-height:1.6;}
+  .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .ref-table-wrap{border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;margin-top:8px;}
+  .ref-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .ref-table th{background:var(--teal);color:var(--white);padding:7px 10px;text-align:left;font-weight:600;font-size:11px;}
+  .ref-table td{padding:6px 10px;border-bottom:1px solid var(--gray-100);color:var(--gray-600);}
+  .ref-table tr:last-child td{border-bottom:none;}
+  .ref-table tr:nth-child(even) td{background:var(--off-white);}
+  .badge{display:inline-block;font-size:10px;font-weight:600;padding:1px 7px;border-radius:8px;}
+  .badge-m{background:#DBEAFE;color:#1E40AF;}
+  .badge-f{background:#FCE7F3;color:#9D174D;}
+  footer{background:var(--teal);text-align:center;padding:18px;margin-top:40px;}
+  footer p{font-size:12px;color:rgba(255,255,255,.5);letter-spacing:1px;}
+  footer span{color:var(--gold);}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <svg width="64" height="64" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(60,54)">
+        <g transform="rotate(-60)"><ellipse cx="0" cy="-38" rx="9" ry="22" fill="#1A6B6B" opacity=".5"/></g>
+        <g transform="rotate(-30)"><ellipse cx="0" cy="-42" rx="10" ry="26" fill="#1A6B6B" opacity=".65"/></g>
+        <g transform="rotate(0)"><ellipse cx="0" cy="-44" rx="11" ry="28" fill="#1A6B6B" opacity=".85"/></g>
+        <g transform="rotate(30)"><ellipse cx="0" cy="-42" rx="10" ry="26" fill="#1A6B6B" opacity=".65"/></g>
+        <g transform="rotate(60)"><ellipse cx="0" cy="-38" rx="9" ry="22" fill="#1A6B6B" opacity=".5"/></g>
+        <g transform="rotate(-40)"><ellipse cx="0" cy="-30" rx="8" ry="19" fill="#C9A84C" opacity=".7"/></g>
+        <g transform="rotate(-15)"><ellipse cx="0" cy="-33" rx="9" ry="21" fill="#C9A84C" opacity=".85"/></g>
+        <g transform="rotate(0)"><ellipse cx="0" cy="-35" rx="9" ry="23" fill="#C9A84C"/></g>
+        <g transform="rotate(15)"><ellipse cx="0" cy="-33" rx="9" ry="21" fill="#C9A84C" opacity=".85"/></g>
+        <g transform="rotate(40)"><ellipse cx="0" cy="-30" rx="8" ry="19" fill="#C9A84C" opacity=".7"/></g>
+        <g transform="rotate(-20)"><ellipse cx="0" cy="-22" rx="6" ry="13" fill="#F0D080" opacity=".9"/></g>
+        <g transform="rotate(0)"><ellipse cx="0" cy="-24" rx="7" ry="15" fill="#F0D080"/></g>
+        <g transform="rotate(20)"><ellipse cx="0" cy="-22" rx="6" ry="13" fill="#F0D080" opacity=".9"/></g>
+        <circle cx="0" cy="0" r="9" fill="#C9A84C"/>
+        <circle cx="0" cy="0" r="4.5" fill="#F0D080"/>
+        <path d="M -40 7 Q -24 16 0 12 Q 24 16 40 7" fill="none" stroke="#F0D080" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
+      </g>
+    </svg>
+    <div class="header-text">
+      <h1>S A YOGA CLASSES</h1>
+      <p>WELLNESS · BALANCE · STRENGTH</p>
+    </div>
+  </div>
+  <div class="header-divider"></div>
+</header>
+<div class="nav-bar">
+  <div class="nav-inner">CLIENT DIET PLAN GENERATOR &nbsp;·&nbsp; <span>Powered by Clinical BIA Analysis + Herbonutrigenx Supplements</span></div>
+</div>
+
+<main>
+  <div class="section-label">Patient information</div>
+  <div class="grid-3">
+    <div class="field"><label>Patient name</label><input type="text" id="patientName" placeholder="Full name"/></div>
+    <div class="field"><label>Age</label><input type="number" id="age" placeholder="35" min="10" max="100"/></div>
+    <div class="field"><label>Sex</label>
+      <select id="sex" onchange="updateRanges()"><option value="">Select</option><option value="male">Male</option><option value="female">Female</option></select>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top:12px;">
+    <div class="field"><label>Height (cm)</label><input type="number" id="height" placeholder="170"/></div>
+    <div class="field"><label>Dietitian / Trainer</label><input type="text" id="dietitian" placeholder="Your name (optional)"/></div>
+  </div>
+
+  <div class="section-label">BIA scale readings</div>
+  <div class="grid-3">
+    <div class="field"><label>Weight (kg)</label><input type="number" id="weight" placeholder="75" step="0.1"/></div>
+    <div class="field"><label>BMI</label><input type="number" id="bmi" placeholder="26.5" step="0.1" oninput="flagRange('bmi',this.value)"/>
+      <div id="flag-bmi"></div><div class="field-hint">Normal: 18.5–24.9</div></div>
+    <div class="field"><label>Body fat %</label><input type="number" id="bodyFat" placeholder="22" step="0.1" oninput="flagRange('bodyFat',this.value)"/>
+      <div id="flag-bodyFat"></div><div class="field-hint" id="ref-bodyFat">Select sex to see range</div></div>
+  </div>
+  <div class="grid-4" style="margin-top:12px;">
+    <div class="field"><label>Muscle mass (kg)</label><input type="number" id="muscleMass" placeholder="35" step="0.1" oninput="flagRange('muscleMass',this.value)"/>
+      <div id="flag-muscleMass"></div><div class="field-hint" id="ref-muscleMass">Select sex</div></div>
+    <div class="field"><label>Muscle rate %</label><input type="number" id="muscleRate" placeholder="46" step="0.1" oninput="flagRange('muscleRate',this.value)"/>
+      <div id="flag-muscleRate"></div><div class="field-hint" id="ref-muscleRate">Select sex</div></div>
+    <div class="field"><label>Visceral fat</label><input type="number" id="visceralFat" placeholder="8" oninput="flagRange('visceralFat',this.value)"/>
+      <div id="flag-visceralFat"></div><div class="field-hint">Normal: 1–9</div></div>
+    <div class="field"><label>BMR (kcal/day)</label><input type="number" id="bmr" placeholder="1650"/>
+      <div class="field-hint" id="ref-bmr">Select sex</div></div>
+  </div>
+  <div class="grid-3" style="margin-top:12px;">
+    <div class="field"><label>Bone mass (kg)</label><input type="number" id="boneMass" placeholder="3.2" step="0.1" oninput="flagRange('boneMass',this.value)"/>
+      <div id="flag-boneMass"></div><div class="field-hint" id="ref-boneMass">Select sex</div></div>
+    <div class="field"><label>Body water %</label><input type="number" id="bodyWater" placeholder="55" step="0.1" oninput="flagRange('bodyWater',this.value)"/>
+      <div id="flag-bodyWater"></div><div class="field-hint" id="ref-bodyWater">Select sex</div></div>
+    <div class="field"><label>Metabolic age</label><input type="number" id="metabolicAge" placeholder="40"/>
+      <div class="field-hint">Lower than actual age = good</div></div>
+  </div>
+
+  <div class="section-label">BIA reference ranges</div>
+  <div class="ref-table-wrap">
+    <table class="ref-table">
+      <thead><tr>
+        <th>Parameter</th>
+        <th><span class="badge badge-m">M</span> Low</th><th><span class="badge badge-m">M</span> Normal</th><th><span class="badge badge-m">M</span> High</th>
+        <th><span class="badge badge-f">F</span> Low</th><th><span class="badge badge-f">F</span> Normal</th><th><span class="badge badge-f">F</span> High</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>BMI</td><td colspan="6" style="text-align:center;color:var(--gray-400);">Under 18.5 | Normal 18.5–24.9 | Overweight 25–29.9 | Obese 30+ (same for all)</td></tr>
+        <tr><td>Body fat %</td><td>&lt;8%</td><td>8–19%</td><td>&gt;25%</td><td>&lt;21%</td><td>21–33%</td><td>&gt;39%</td></tr>
+        <tr><td>Muscle mass (kg)</td><td>&lt;29</td><td>29–44</td><td>&gt;44</td><td>&lt;20</td><td>20–31</td><td>&gt;31</td></tr>
+        <tr><td>Muscle rate %</td><td>&lt;40%</td><td>40–50%</td><td>&gt;55%</td><td>&lt;30%</td><td>30–40%</td><td>&gt;45%</td></tr>
+        <tr><td>Visceral fat</td><td colspan="6" style="text-align:center;color:var(--gray-400);">1–9 Normal | 10–14 High | 15+ Very High (same for all)</td></tr>
+        <tr><td>Bone mass (kg)</td><td>&lt;2.5</td><td>2.5–3.5</td><td>&gt;3.5</td><td>&lt;1.8</td><td>1.8–2.8</td><td>&gt;2.8</td></tr>
+        <tr><td>Body water %</td><td>&lt;50%</td><td>50–65%</td><td>&gt;70%</td><td>&lt;45%</td><td>45–60%</td><td>&gt;65%</td></tr>
+        <tr><td>BMR (kcal/day)</td><td>&lt;1500</td><td>1500–2000</td><td>&gt;2200</td><td>&lt;1200</td><td>1200–1600</td><td>&gt;1800</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-label">Activity & goal</div>
+  <div class="field" style="margin-bottom:12px;"><label>Activity level</label>
+    <select id="activity">
+      <option value="sedentary">Sedentary (desk job)</option>
+      <option value="light">Light (1–3 days/week)</option>
+      <option value="moderate" selected>Moderate (3–5 days/week)</option>
+      <option value="active">Active (6–7 days/week)</option>
+      <option value="very_active">Very active (athlete / physical job)</option>
+    </select>
+  </div>
+  <div class="field"><label>Goal <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--teal-soft);">— select one or more</span></label>
+    <div class="conditions-grid" style="margin-top:6px;">
+      <label class="condition-chip" id="goal-chip-fat_loss"><input type="checkbox" name="goal" value="Fat loss" onchange="toggleGoalChip(this)"/><div class="chip-icon">🔥</div><span class="chip-label">Fat loss</span></label>
+      <label class="condition-chip" id="goal-chip-muscle_gain"><input type="checkbox" name="goal" value="Muscle gain" onchange="toggleGoalChip(this)"/><div class="chip-icon">💪</div><span class="chip-label">Muscle gain</span></label>
+      <label class="condition-chip" id="goal-chip-recomposition"><input type="checkbox" name="goal" value="Body recomposition" onchange="toggleGoalChip(this)"/><div class="chip-icon">⚖️</div><span class="chip-label">Body recomposition</span></label>
+      <label class="condition-chip" id="goal-chip-maintenance"><input type="checkbox" name="goal" value="Maintenance" onchange="toggleGoalChip(this)"/><div class="chip-icon">🎯</div><span class="chip-label">Maintenance</span></label>
+      <label class="condition-chip" id="goal-chip-health"><input type="checkbox" name="goal" value="General health optimisation" onchange="toggleGoalChip(this)"/><div class="chip-icon">🌿</div><span class="chip-label">Health optimisation</span></label>
+      <label class="condition-chip" id="goal-chip-energy"><input type="checkbox" name="goal" value="Energy & stamina improvement" onchange="toggleGoalChip(this)"/><div class="chip-icon">⚡</div><span class="chip-label">Energy & stamina</span></label>
+      <label class="condition-chip" id="goal-chip-immunity"><input type="checkbox" name="goal" value="Immunity boost" onchange="toggleGoalChip(this)"/><div class="chip-icon">🛡️</div><span class="chip-label">Immunity boost</span></label>
+      <label class="condition-chip" id="goal-chip-antiaging"><input type="checkbox" name="goal" value="Anti-aging & longevity" onchange="toggleGoalChip(this)"/><div class="chip-icon">✨</div><span class="chip-label">Anti-aging & longevity</span></label>
+    </div>
+    <p id="goal-error" style="display:none;font-size:12px;color:var(--danger);margin-top:6px;">Please select at least one goal.</p>
+  </div>
+
+  <div class="section-label">Clinical conditions</div>
+  <div class="conditions-grid">
+    <label class="condition-chip"><input type="checkbox" value="diabetes" onchange="toggleChip(this)"/><div class="chip-icon">🩸</div><span class="chip-label">Diabetes / insulin resistance</span></label>
+    <label class="condition-chip"><input type="checkbox" value="hypertension" onchange="toggleChip(this)"/><div class="chip-icon">❤️</div><span class="chip-label">Hypertension</span></label>
+    <label class="condition-chip"><input type="checkbox" value="thyroid" onchange="toggleChip(this)"/><div class="chip-icon">🛡️</div><span class="chip-label">Thyroid disorders</span></label>
+    <label class="condition-chip"><input type="checkbox" value="kidney" onchange="toggleChip(this)"/><div class="chip-icon">🫘</div><span class="chip-label">Kidney disease</span></label>
+    <label class="condition-chip"><input type="checkbox" value="obesity" onchange="toggleChip(this)"/><div class="chip-icon">⚖️</div><span class="chip-label">Obesity / metabolic syndrome</span></label>
+    <label class="condition-chip"><input type="checkbox" value="liver" onchange="toggleChip(this)"/><div class="chip-icon">🟤</div><span class="chip-label">Liver / fatty liver</span></label>
+    <label class="condition-chip"><input type="checkbox" value="joints" onchange="toggleChip(this)"/><div class="chip-icon">🦴</div><span class="chip-label">Joints / arthritis</span></label>
+    <label class="condition-chip"><input type="checkbox" value="digestion" onchange="toggleChip(this)"/><div class="chip-icon">🫃</div><span class="chip-label">Gut / digestion / constipation</span></label>
+    <label class="condition-chip"><input type="checkbox" value="piles" onchange="toggleChip(this)"/><div class="chip-icon">🔴</div><span class="chip-label">Piles / hemorrhoids</span></label>
+    <label class="condition-chip" id="womens-health-chip" onclick="toggleWomensHealth(event)"><div class="chip-icon">👩</div><span class="chip-label">Women's health</span><span style="margin-left:auto;font-size:11px;color:var(--teal-soft);" id="womens-arrow">▼</span></label>
+    <label class="condition-chip"><input type="checkbox" value="none" onchange="toggleChip(this)"/><div class="chip-icon">✅</div><span class="chip-label">General healthy population</span></label>
+  </div>
+
+  <!-- Women's Health Sub-conditions -->
+  <div id="womens-health-sub" style="display:none;margin-top:10px;padding:14px;background:var(--teal-light);border:1.5px solid var(--teal-mid);border-radius:var(--radius);">
+    <p style="font-size:12px;font-weight:600;color:var(--teal);margin-bottom:10px;">👩 Select women's health concern(s):</p>
+    <div class="conditions-grid">
+      <label class="condition-chip" style="background:var(--white);"><input type="checkbox" value="menopause" onchange="toggleWomensSubChip(this)"/><div class="chip-icon">🌸</div><span class="chip-label">Menopause / post-menopause</span></label>
+      <label class="condition-chip" style="background:var(--white);"><input type="checkbox" value="pcod" onchange="toggleWomensSubChip(this)"/><div class="chip-icon">🔄</div><span class="chip-label">PCOD / PCOS</span></label>
+      <label class="condition-chip" style="background:var(--white);"><input type="checkbox" value="leucorrhoea" onchange="toggleWomensSubChip(this)"/><div class="chip-icon">💧</div><span class="chip-label">White discharge / Leucorrhoea</span></label>
+      <label class="condition-chip" style="background:var(--white);"><input type="checkbox" value="vaginal_infection" onchange="toggleWomensSubChip(this)"/><div class="chip-icon">🦠</div><span class="chip-label">Vaginal infection / UTI</span></label>
+      <label class="condition-chip" style="background:var(--white);"><input type="checkbox" value="pms" onchange="toggleWomensSubChip(this)"/><div class="chip-icon">📅</div><span class="chip-label">PMS / irregular periods</span></label>
+      <label class="condition-chip" style="background:var(--white);"><input type="checkbox" value="fertility_women" onchange="toggleWomensSubChip(this)"/><div class="chip-icon">🤱</div><span class="chip-label">Fertility support</span></label>
+    </div>
+  </div>
+
+  <div class="section-label">Additional notes (optional)</div>
+  <div class="field"><textarea id="notes" rows="2" placeholder="Allergies, food preferences, medications, or special instructions..."></textarea></div>
+
+  <button class="generate-btn" id="generateBtn" onclick="generatePlan()">✦ Generate diet plan + supplement recommendations</button>
+  <div class="error-msg" id="errorMsg">Please fill in patient name, age, sex, height, and weight before generating.</div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <h2 id="resultTitle">Diet Plan</h2>
+      <div class="result-badge">AI-GENERATED</div>
+    </div>
+    <div class="result-body">
+      <div class="result-content" id="resultContent"></div>
+      <div class="supp-section" id="suppSection" style="display:none;">
+        <div class="supp-title">💊 Recommended Herbonutrigenx Supplements</div>
+        <div class="supp-list" id="suppList"></div>
+        <div id="totalMRPBox" style="display:none;margin-top:12px;padding:10px 14px;background:var(--teal-light);border:1.5px solid var(--teal-mid);border-radius:8px;display:flex;align-items:center;justify-content:space-between;">
+  <div>
+    <p style="font-size:12px;font-weight:600;color:var(--teal);">Estimated monthly investment</p>
+    <p style="font-size:11px;color:var(--teal-soft);">MRP total for all recommended supplements</p>
+  </div>
+  <div id="totalMRPAmount" style="font-size:20px;font-weight:700;color:var(--teal);">₹0</div>
+</div>
+<div style="margin-top:10px;padding:10px 14px;background:#FFF8E1;border-left:3px solid var(--gold);border-radius:8px;">
+  <p style="font-size:12px;font-weight:700;color:var(--gold-dark);margin-bottom:4px;">⚠ Important — Allopathy Medicine Gap</p>
+  <p style="font-size:11px;color:var(--gold-dark);line-height:1.6;">If the client is on any prescription or allopathy medicines, maintain a minimum gap of <strong>90 minutes to 2 hours</strong> between allopathy medicines and these supplements. Always take supplements <strong>after food</strong>.</p>
+</div>
+<div style="margin-top:10px;padding:10px 14px;background:var(--gray-100);border-radius:8px;">
+  <p style="font-size:11px;color:var(--gray-600);line-height:1.7;">Disclaimer | अस्वीकरण: These products are not intended to treat, diagnose or cure any disease. Pregnant / Lactating women or Children under 18 years of age should consult physician before use. Do not exceed the suggested amount. Discontinue use if any side effect occurs. | इन उत्पादों का उद्देश्य किसी बीमारी का इलाज, निदान या इलाज नहीं करना है। गर्भवती / स्तनपान कराने वाली महिलाओं या 18 वर्ष से कम उम्र के बच्चों को उपयोग करने से पहले चिकित्सक से परामर्श लेना चाहिए। सुझाई गई राशि से अधिक न हो। यदि कोई दुष्प्रभाव होता है तो उपयोग बंद करें।</p>
+</div>
+      </div>
+      <div class="action-row">
+        <button class="pdf-btn" id="pdfBtn" onclick="exportPDF()">⬇ Download PDF Report</button>
+        <button class="new-btn" onclick="resetForm()">↺ New client</button>
+      </div>
+      <div class="disclaimer">⚠ This plan is for informational and professional reference. Review with a qualified dietitian before implementation. Supplements are not intended to diagnose, treat, or cure any disease.</div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p>© 2026 <span>S A Yoga Classes</span> &nbsp;·&nbsp; Diet Plan Generator &nbsp;·&nbsp; Wellness · Balance · Strength</p>
+</footer>
+
+<script>
+// ── Herbonutrigenx product catalogue (verified from official catalogue) ──
+const PRODUCTS = [
+  // ── CAPSULES ──
+  {name:"Young Fuel",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Anti-aging, NAD+ support, cellular energy, longevity, metabolic support",conditions:["aging","anti-aging","low energy","metabolic syndrome","obesity","diabetes"],tags:["anti_aging","energy","longevity"]},
+  {name:"Ashwa One+ (KSM-66)",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Ashwagandha KSM-66, Ginseng, Fisetin, Green tea. Stress, energy, hormonal balance, anti-aging, immunity",conditions:["stress","anxiety","fatigue","hormonal imbalance","low stamina","depression","insomnia"],tags:["stress","energy","hormonal"]},
+  {name:"Brain One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Ginkgo biloba, Bacopa, Ashwagandha, DHA. Cognitive support, memory, nervous system, alertness, mood",conditions:["mental health","memory","cognitive issues","depression","insomnia","brain"],tags:["brain","cognitive","memory"]},
+  {name:"Liver One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Milk thistle, NAC, CoQ10, L-Glutathione, ALA. Liver detox, fat metabolism, glucose metabolism, fatty liver",conditions:["fatty liver","liver","cholesterol","high lipids","diabetes"],tags:["liver","detox","metabolism"]},
+  {name:"Heart One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule",timing:"after breakfast (after food)",benefits:"CoQ10, Trans-resveratrol, L-Glutathione, DHA, CLA, Gamma Oryzanol. Cardiac protection, lipid management",conditions:["heart","cardiovascular","high cholesterol","hypertension","high triglycerides"],tags:["heart","cardio","lipids"]},
+  {name:"Joint Flexer",form:"Capsules",pack:"60 Capsules",dose:"2 capsules",timing:"after breakfast and after dinner (always after food)",benefits:"Therapeutic joint formula. Reduces pain, stiffness, restores mobility, suppresses swelling. For moderate-severe joint issues.",conditions:["joints","arthritis","osteoarthritis","joint pain","stiffness","back pain"],tags:["joints","anti_inflammatory","mobility"]},
+  {name:"Carb Cut One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule before lunch + 1 capsule before dinner",timing:"15 min before lunch and 15 min before dinner",benefits:"White kidney bean extract. Weight management, reduces starch digestion, regulates blood glucose",conditions:["diabetes","obesity","weight management","blood sugar"],tags:["diabetes","weight","glucose"]},
+  {name:"Thyro One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Manages thyroid hormone levels, supports liver for thyroid function, metabolic support",conditions:["thyroid","hypothyroid","hyperthyroid","metabolic disorder"],tags:["thyroid","metabolism","hormonal"]},
+  {name:"Krill One",form:"Softgels",pack:"60 Softgels",dose:"1 softgel after breakfast + 1 softgel after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Krill oil — Omega-3 DHA+EPA, Astaxanthin. Anti-inflammatory, heart, brain, joints, skin, cholesterol",conditions:["heart","joints","skin","anti-aging","brain","cholesterol"],tags:["omega3","anti_inflammatory","heart","brain"]},
+  {name:"Hair One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Blocks DHT, supports hair growth, reduces hair fall, promotes scalp health",conditions:["hair loss","hair fall","scalp","DHT","alopecia"],tags:["hair","scalp","DHT"]},
+  {name:"Lungs Fuel",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Respiratory support, immunity, prevents smoking/pollution damage, COPD support, reduces coughing",conditions:["lungs","respiratory","COPD","smoking","cough","pollution"],tags:["lungs","respiratory","immunity"]},
+  {name:"Sweet 18+",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"18+ women daily wellness. PMS relief, skin and hormone wellness, stress, antioxidant, immunity",conditions:["PMS","women health","18+ women","skin","hormonal imbalance","stress"],tags:["women","PMS","hormonal","skin"]},
+  {name:"Prostate One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Optimal prostate function, BPH management, healthy urinary flow, reduces prostate inflammation",conditions:["prostate","BPH","urinary","men health"],tags:["prostate","urinary","men"]},
+  {name:"Vitality Fuel H",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Cordyceps, Ashwagandha, Shilajit. Energy, stamina, sexual health, libido, hormonal balance for men",conditions:["low energy","low libido","sexual health","hormonal imbalance","stamina","fertility men"],tags:["energy","sexual","hormonal","stamina"]},
+  {name:"Vitality Fuel E",form:"Capsules",pack:"30 Capsules",dose:"1 capsule",timing:"after breakfast (after food)",benefits:"Vitality, erectile dysfunction support, lasting control, hormonal balance, antioxidant support for men",conditions:["low energy","erectile dysfunction","sexual health","hormonal imbalance","men vitality"],tags:["energy","sexual","hormonal"]},
+  {name:"Uric One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Reduces uric acid levels, joint and muscle pain, swelling, accumulation in joints, improves kidney function",conditions:["uric acid","gout","joint pain","kidney","inflammation"],tags:["uric_acid","gout","kidney","anti_inflammatory"]},
+  {name:"Flush One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Kidney stone dissolution, natural diuretic, manages urinary tract infections",conditions:["kidney stones","UTI","kidney","urinary"],tags:["kidney","urinary","diuretic"]},
+  {name:"A9-Onko",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Ganoderma, Grapeseed, Curcumin C3, Lycopene, Ginger, Green tea. Anti-tumor, cellular health, antioxidant",conditions:["cancer support","anti-aging","cellular health","immunity","antioxidant"],tags:["anticancer","cellular","antioxidant","immunity"]},
+  {name:"PIL One",form:"Capsules",pack:"60+7 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Natural piles relief, reduces bleeding, hemorrhoid issues, helps tackle chronic constipation",conditions:["piles","hemorrhoids","constipation","rectal bleeding"],tags:["piles","constipation","gut"]},
+  {name:"GPM Syrup",form:"Syrup",pack:"200ml bottle",dose:"15 ml",timing:"after breakfast and after dinner (after food)",benefits:"Gut and Piles Management Syrup. Promotes digestive health, regulates bowel movements, supports piles management, relieves indigestion, bloating and constipation",conditions:["digestion","indigestion","constipation","bloating","gas","acidity","piles","gut health","IBS"],tags:["gut","digestion","piles","constipation"]},
+  {name:"WLB One",form:"Capsules",pack:"60 Capsules",dose:"1 capsule after breakfast + 1 capsule after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Weight and lipid balance, metabolic support, energy",conditions:["weight management","cholesterol","metabolism","obesity"],tags:["weight","lipids","metabolism"]},
+
+  // ── TABLETS ──
+  {name:"Everyday One",form:"Tablets",pack:"60 Tablets",dose:"1 tablet",timing:"after breakfast (after food)",benefits:"Daily multivitamin + minerals + TMG + Calcium AKG + probiotics + herbs. General nutrition, immunity, stamina, brain wellness",conditions:["micronutrient deficiency","immunity","general health","stamina","brain wellness"],tags:["general","immunity","nutrition"]},
+  {name:"Ortho One",form:"Tablets",pack:"60 Tablets",dose:"1 tablet after breakfast + 1 tablet after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Collagen peptide, Glucosamine, Chondroitin, MSM, Boswellia, Curcumin. Cartilage support, bone health. For mild/preventive joint care.",conditions:["joints","bones","cartilage","mild joint discomfort","preventive joint care"],tags:["joints","bones","cartilage"]},
+  {name:"Diab Vital One",form:"Tablets",pack:"60 Tablets",dose:"2 tablets",timing:"after breakfast and after dinner (always after food)",benefits:"Healthy glucose metabolism, immunity, stamina, reduces diabetes side effects, heart and liver health",conditions:["diabetes","insulin resistance","blood sugar","metabolic syndrome"],tags:["diabetes","glucose","immunity"]},
+  {name:"Amazing 40+",form:"Tablets",pack:"60 Tablets",dose:"1 tablet after breakfast + 1 tablet after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"40+ women daily nutrition, menopause symptoms, bones and joints, skin wellness, hormonal balance, liver and heart",conditions:["menopause","40+ women","hormonal imbalance","bones","joints","skin","liver"],tags:["women","menopause","hormonal","bones"]},
+  {name:"Cal Mg D",form:"Tablets",pack:"100 Tablets",dose:"2 tablets",timing:"after dinner (after food)",benefits:"Calcium + Magnesium + Vitamin D3. Bone strength, teeth, immunity, supports calcium absorption, muscle strength",conditions:["bones","osteoporosis","calcium deficiency","muscle weakness","immunity","teeth"],tags:["bones","calcium","immunity"]},
+  {name:"Fitness One",form:"Tablets",pack:"60 Tablets",dose:"1 tablet after breakfast + 1 tablet after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Advanced green tea extract. Detoxification, weight management, antioxidant, anti-aging, stamina, energy, stress relief",conditions:["weight management","obesity","detox","anti-aging","stamina","stress","fat loss"],tags:["weight","detox","energy","antioxidant"]},
+
+  // ── SOFTGELS ──
+  {name:"Flax ALA",form:"Softgels",pack:"60 Softgels",dose:"1 softgel after breakfast + 1 softgel after dinner",timing:"after breakfast and after dinner (always after food)",benefits:"Flaxseed omega fatty acids, ALA. Cardiovascular health, healthy skin, reduces inflammation",conditions:["heart","skin","inflammation","cholesterol","joints"],tags:["heart","omega","anti_inflammatory","skin"]},
+
+  // ── SYRUPS / LIQUIDS ──
+  {name:"Livo Syrup",form:"Syrup",pack:"200ml bottle",dose:"15 ml",timing:"before meals twice daily",benefits:"Restorative liver tonic. Supports liver function, stimulates digestive juices, improves digestion and assimilation",conditions:["liver","fatty liver","digestion","thyroid","kidney","cholesterol","anemia"],tags:["liver","digestion","detox"]},
+  {name:"Women One",form:"Syrup",pack:"200ml bottle",dose:"15 ml",timing:"after breakfast (after food)",benefits:"Women daily tonic. Immunity, hormone balance, regulates menstrual cycle, healthy skin and hair",conditions:["women health","hormonal imbalance","menstrual","immunity","skin","hair"],tags:["women","hormonal","immunity","menstrual"]},
+  {name:"Luco-UT One",form:"Syrup",pack:"200ml bottle",dose:"15 ml",timing:"after meals twice daily",benefits:"Manages vaginal infection, white discharge (leucorrhoea), reduces muscle weakness, urinary tract support",conditions:["UTI","leucorrhoea","women health","urinary","vaginal infection"],tags:["women","urinary","infection"]},
+
+  // ── JUICES ──
+  {name:"SBTC Juice",form:"Juice",pack:"1 Litre bottle",dose:"30 ml diluted in 100 ml water",timing:"morning on empty stomach",benefits:"Seabuckthorn + Curcumin. Powerful antioxidant, improves immunity, digestion, healthy skin, joint health, liver, cholesterol",conditions:["immunity","joints","skin","digestion","cholesterol","liver","anti-aging","antioxidant"],tags:["antioxidant","immunity","joints","skin"]},
+  {name:"AVBT Juice",form:"Juice",pack:"1 Litre bottle",dose:"30 ml diluted in 100 ml water",timing:"morning on empty stomach",benefits:"Aloe Vera + Beetroot. Body detox, cardiovascular function, regulates blood pressure, digestion, gut health, liver",conditions:["hypertension","heart","liver","digestion","detox","blood pressure","gut health"],tags:["heart","detox","digestion","bp"]},
+
+  // ── POWDERS ──
+  {name:"Marine Collagen",form:"Powder",pack:"200g",dose:"1 scoop in water",timing:"morning on empty stomach",benefits:"Marine collagen peptides. Skin, hair, nails, joint and bone collagen support, anti-aging",conditions:["skin","hair","joints","anti-aging","bones","nails"],tags:["collagen","skin","anti_aging","joints"]},
+  {name:"A-One Lean",form:"Powder",pack:"500g",dose:"1 scoop in water or low-fat milk",timing:"as meal replacement or post workout",benefits:"Promotes healthy weight management, boosts energy and metabolism, provides balanced nutrition",conditions:["weight management","obesity","metabolism","energy","meal replacement"],tags:["weight","metabolism","energy"]},
+
+  // ── SACHETS ──
+  {name:"Argi One",form:"Sachets",pack:"30 x 10g Sachets",dose:"1 sachet dissolved in water",timing:"before breakfast on empty stomach",benefits:"L-Arginine based. Improves blood circulation, antioxidant support, longevity and vitality",conditions:["circulation","heart","hypertension","anti-aging","energy","blood flow"],tags:["circulation","heart","antioxidant"]},
+  {name:"Diab-O-Sip Coffee",form:"Sachets",pack:"25 Sachets",dose:"1 sachet in hot water",timing:"morning as coffee replacement",benefits:"Holistic blood sugar management, cardiovascular support, regulates appetite and metabolism",conditions:["diabetes","blood sugar","weight management","heart"],tags:["diabetes","glucose","weight"]},
+  {name:"Gut Fibreal",form:"Sachets",pack:"Sachets",dose:"1 sachet in a glass of water",timing:"before bedtime",benefits:"Isabgol, Inulin, FOS, Probiotics (5 billion CFU). Digestive health, regulates bowel movement, gut support, immunity",conditions:["digestion","gut health","constipation","immunity","weight management"],tags:["gut","digestion","probiotic"]},
+];
+
+const RANGES = {
+  male:{bodyFat:{low:8,high:25,label:'Normal: 8–19%'},muscleMass:{low:29,high:44,label:'Normal: 29–44 kg'},muscleRate:{low:40,high:55,label:'Normal: 40–50%'},visceralFat:{low:1,high:9,label:'Normal: 1–9'},boneMass:{low:2.5,high:3.5,label:'Normal: 2.5–3.5 kg'},bodyWater:{low:50,high:70,label:'Normal: 50–65%'},bmi:{low:18.5,high:24.9,label:'Normal: 18.5–24.9'}},
+  female:{bodyFat:{low:21,high:39,label:'Normal: 21–33%'},muscleMass:{low:20,high:31,label:'Normal: 20–31 kg'},muscleRate:{low:30,high:45,label:'Normal: 30–40%'},visceralFat:{low:1,high:9,label:'Normal: 1–9'},boneMass:{low:1.8,high:2.8,label:'Normal: 1.8–2.8 kg'},bodyWater:{low:45,high:65,label:'Normal: 45–60%'},bmi:{low:18.5,high:24.9,label:'Normal: 18.5–24.9'}}
+};
+
+function updateRanges(){
+  const sex=document.getElementById('sex').value;
+  ['bodyFat','muscleMass','muscleRate','boneMass','bodyWater'].forEach(f=>{
+    const el=document.getElementById('ref-'+f);
+    if(el) el.textContent=sex&&RANGES[sex]?RANGES[sex][f].label:'Select sex to see range';
+    const v=document.getElementById(f)?document.getElementById(f).value:'';
+    if(v) flagRange(f,v);
+  });
+  const bmrRef=document.getElementById('ref-bmr');
+  if(bmrRef) bmrRef.textContent=sex==='male'?'Normal: 1500–2000 kcal':sex==='female'?'Normal: 1200–1600 kcal':'Select sex';
+}
+
+function flagRange(field,value){
+  const sex=document.getElementById('sex').value;
+  const flagEl=document.getElementById('flag-'+field);
+  if(!flagEl) return;
+  if(!sex||!value||!RANGES[sex]||!RANGES[sex][field]){flagEl.innerHTML='';return;}
+  const r=RANGES[sex][field];const v=parseFloat(value);
+  let cls,label;
+  if(v<r.low){cls='range-low';label='Below normal';}
+  else if(v<=r.high){cls='range-normal';label='Normal';}
+  else{cls='range-high';label='Above normal';}
+  flagEl.innerHTML=`<span class="range-tag ${cls}">${label}</span>`;
+}
+
+function toggleGoalChip(checkbox){
+  const chip = checkbox.closest('.condition-chip');
+  chip.classList.toggle('active', checkbox.checked);
+}
+
+function toggleWomensHealth(event){
+  event.preventDefault();
+  const sub = document.getElementById('womens-health-sub');
+  const chip = document.getElementById('womens-health-chip');
+  const arrow = document.getElementById('womens-arrow');
+  const isOpen = sub.style.display !== 'none';
+  sub.style.display = isOpen ? 'none' : 'block';
+  arrow.textContent = isOpen ? '▼' : '▲';
+  chip.classList.toggle('active', !isOpen);
+}
+
+function toggleWomensSubChip(checkbox){
+  const chip = checkbox.closest('.condition-chip');
+  chip.classList.toggle('active', checkbox.checked);
+  // Keep parent chip active if any sub-condition selected
+  const anySelected = document.querySelectorAll('#womens-health-sub input:checked').length > 0;
+  document.getElementById('womens-health-chip').classList.toggle('active', anySelected);
+}
+
+function getWomensConditions(){
+  return Array.from(document.querySelectorAll('#womens-health-sub input:checked')).map(c => c.value);
+}
+
+function getSelectedGoals(){
+  const goals = Array.from(document.querySelectorAll('input[name="goal"]:checked')).map(c=>c.value);
+  return goals;
+}
+
+function toggleChip(checkbox){
+  const chip=checkbox.closest('.condition-chip');
+  if(checkbox.value==='none'&&checkbox.checked){
+    document.querySelectorAll('.condition-chip input').forEach(cb=>{if(cb.value!=='none'){cb.checked=false;cb.closest('.condition-chip').classList.remove('active');}});
+  }else if(checkbox.checked){
+    const nc=document.querySelector('input[value="none"]');
+    if(nc){nc.checked=false;nc.closest('.condition-chip').classList.remove('active');}
+  }
+  chip.classList.toggle('active',checkbox.checked);
+}
+
+function getVal(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+
+let lastPlanText='';
+let lastPatientData={};
+let lastSupplements=[];
+
+// ── Rule-based supplement selector using official catalogue suggestion list ──
+function selectSupplements(pd){
+  const conditions = pd.conditions || [];
+  const goals = (pd.goal || '').toLowerCase();
+  const age = parseInt(pd.age) || 0;
+  const visceralFat = parseFloat(pd.visceralFat) || 0;
+  const metabolicAge = parseInt(pd.metabolicAge) || 0;
+  const actualAge = parseInt(pd.age) || 0;
+  const bmi = parseFloat(pd.bmi) || 0;
+  const bodyFat = parseFloat(pd.bodyFat) || 0;
+  const sex = (pd.sex || '').toLowerCase();
+
+  const has = (c) => conditions.some(x => x.toLowerCase().includes(c.toLowerCase()));
+  const wantsWeight = goals.includes('fat') || goals.includes('weight') || goals.includes('recomp') || goals.includes('lean');
+  const wantsAntiAging = goals.includes('anti') || goals.includes('longevity') || goals.includes('aging');
+  const wantsEnergy = goals.includes('energy') || goals.includes('stamina');
+  const wantsImmunity = goals.includes('immun');
+
+  // Score each product based on conditions + goals
+  // Returns array of {name, score, reason}
+  const scores = [];
+
+  const add = (name, score, reason) => {
+    const existing = scores.find(s => s.name === name);
+    if(existing){ existing.score += score; existing.reason = reason; }
+    else scores.push({name, score, reason});
+  };
+
+  // ── STEP 1: Always pick ONE priority juice ──
+  // AVBT wins if hypertension, heart, blood pressure, liver detox
+  if(has('hypertension') || has('heart') || has('liver')){
+    add('AVBT Juice', 100, 'Aloe vera + beetroot directly addresses blood pressure, supports cardiovascular function and liver detoxification.');
+  } else {
+    add('SBTC Juice', 100, 'Seabuckthorn + curcumin provides powerful antioxidant and immunity support aligned with your health goals.');
+  }
+
+  // ── STEP 2: Apply official catalogue suggestion list ──
+  // Row 1 - Anti-aging
+  if(wantsAntiAging || age >= 40 || (metabolicAge - actualAge >= 3)){
+    add('Young Fuel', 90, 'NAD+ and cellular energy support — essential given accelerated metabolic age and anti-aging goals.');
+    add('Ashwa One+ (KSM-66)', 70, 'Adaptogenic support for anti-aging, hormonal balance and stress management.');
+    add('Krill One', 60, 'Omega-3 DHA+EPA and astaxanthin for anti-aging, joint and cardiovascular support.');
+  }
+
+  // Row 2 - Mental & Nervous System
+  if(has('stress') || has('depression') || has('insomnia') || has('brain') || has('memory')){
+    add('Brain One', 85, 'Ginkgo biloba, Bacopa and DHA support cognitive function, memory and nervous system health.');
+    add('Ashwa One+ (KSM-66)', 80, 'KSM-66 ashwagandha clinically proven for stress, anxiety and mood regulation.');
+    add('Krill One', 65, 'DHA supports brain health and reduces neuroinflammation.');
+  }
+
+  // Row 3 - Thyroid
+  if(has('thyroid')){
+    add('Thyro One', 95, 'Specifically formulated to manage thyroid hormone levels and support liver for optimal thyroid function.');
+    add('Livo Syrup', 75, 'Liver support is essential for T4 to T3 thyroid hormone conversion.');
+  }
+
+  // Row 4 - Liver (primary)
+  if(has('liver') || has('fatty liver')){
+    add('Livo Syrup', 92, 'Restorative liver tonic — stimulates digestive juices, bile production and supports liver detoxification and assimilation.');
+    add('Liver One', 90, 'Milk thistle, NAC, CoQ10 and L-Glutathione provide comprehensive hepatoprotective and cellular detox support for fatty liver.');
+  }
+
+  // Liver One extended indications
+  // Diabetes — liver central to glucose metabolism, NAC and ALA improve insulin sensitivity
+  if(has('diabetes') || has('insulin')){
+    add('Liver One', 82, 'NAC, ALA and CoQ10 in Liver One directly improve insulin sensitivity and glucose metabolism — essential support for diabetic liver health.');
+  }
+
+  // High cholesterol / lipids — liver processes all lipids
+  if(has('cholesterol') || has('lipid') || has('triglyceride')){
+    add('Liver One', 80, 'CLA, CoQ10 and milk thistle support healthy lipid metabolism and reduce hepatic fat accumulation driving high cholesterol.');
+  }
+
+  // Obesity / metabolic syndrome — fatty liver present in 70%+ obese clients
+  if(has('obesity') || bmi >= 28){
+    add('Liver One', 78, 'Obesity is strongly linked to non-alcoholic fatty liver disease — Liver One provides proactive hepatoprotection with L-Glutathione and ALA.');
+  }
+
+  // Thyroid — liver converts T4 to active T3
+  if(has('thyroid')){
+    add('Liver One', 76, 'The liver converts inactive T4 thyroid hormone to active T3 — Liver One optimises this conversion with CoQ10 and selenium support.');
+  }
+
+  // Anti-aging — L-Glutathione and CoQ10 are powerful anti-aging compounds
+  if(wantsAntiAging || age >= 45){
+    add('Liver One', 74, 'L-Glutathione and CoQ10 are master antioxidants that combat cellular aging — Liver One provides systemic anti-aging detox support.');
+  }
+
+  // Long-term allopathy medicine use — liver detox always beneficial
+  if(has('hypertension') || has('diabetes') || has('thyroid') || has('heart')){
+    add('Liver One', 72, 'Clients on long-term prescription medicines benefit significantly from liver detox support — Liver One protects hepatic function and enhances drug metabolism.');
+  }
+
+  // Row 5 - Heart & Cardiac
+  if(has('heart') || has('cardiovascular') || has('hypertension')){
+    add('Heart One', 85, 'CoQ10, resveratrol and DHA provide cardiac protection and support healthy lipid profile.');
+    add('Argi One', 70, 'L-Arginine improves blood circulation and supports cardiovascular health.');
+  }
+
+  // Row 6 - High Lipids & Cholesterol
+  if(has('cholesterol') || has('lipid') || has('triglyceride')){
+    add('Livo Syrup', 85, 'Liver tonic that directly supports fat metabolism and cholesterol management.');
+    add('Heart One', 80, 'Gamma oryzanol and DHA help maintain healthy cholesterol and triglyceride levels.');
+  }
+
+  // Row 7 - Bones & Teeth
+  if(has('bone') || has('osteoporosis') || has('calcium')){
+    add('Cal Mg D', 90, 'Calcium + magnesium + vitamin D3 combination essential for bone strength and density.');
+  }
+
+  // Row 8 - Anaemia & Low HB
+  if(has('anemia') || has('hemoglobin') || has('iron')){
+    add('Livo Syrup', 85, 'Liver tonic supports iron metabolism and haemoglobin production.');
+    add('Hemo 14+', 90, 'Specifically formulated to boost haemoglobin and EPO levels, improving oxygen delivery.');
+  }
+
+  // Row 9 - Vitality for Men
+  if(sex === 'male' && (has('low libido') || has('sexual') || has('stamina') || wantsEnergy)){
+    add('Vitality Fuel H', 85, 'Cordyceps, ashwagandha and shilajit enhance male energy, stamina and hormonal balance.');
+    add('Ashwa One+ (KSM-66)', 75, 'KSM-66 ashwagandha supports testosterone levels, vitality and performance.');
+  }
+
+  // Row 10 - Vitality for Women
+  if(sex === 'female' && (has('hormonal') || has('menstrual') || has('women'))){
+    add('Women One', 85, 'Women daily tonic for hormone balance, menstrual regulation and overall female wellness.');
+    if(age >= 40) add('Amazing 40+', 90, '40+ women formula addressing menopausal symptoms, bone health and hormonal balance.');
+    else add('Sweet 18+', 80, 'Daily wellness for younger women — PMS relief, skin, hormonal balance and immunity.');
+    add('Hemo 14+', 70, 'Supports haemoglobin and EPO levels important for women health and energy.');
+  }
+
+  // ── Women's Health Sub-conditions ──
+
+  // Menopause / Post-menopause
+  if(has('menopause')){
+    add('Amazing 40+', 95, '40+ women formula specifically designed to manage pre/post-menopausal symptoms, hormonal balance, bone health and skin wellness.');
+    add('Krill One', 80, 'Omega-3 DHA+EPA and astaxanthin support cardiovascular health and reduce menopausal inflammation.');
+    add('Cal Mg D', 85, 'Calcium + magnesium + D3 essential for bone density maintenance during and after menopause.');
+    add('Ashwa One+ (KSM-66)', 75, 'Adaptogenic support for hormonal balance, mood regulation and stress during menopausal transition.');
+  }
+
+  // PCOD / PCOS
+  if(has('pcod')){
+    add('Sweet 18+', 90, 'Hormonal balance, skin wellness and antioxidant support directly address PCOD symptoms.');
+    add('Women One', 85, 'Women daily tonic regulates menstrual cycle and supports hormonal balance essential for PCOD management.');
+    add('Ashwa One+ (KSM-66)', 85, 'KSM-66 ashwagandha reduces cortisol and supports hormonal regulation — clinically relevant for PCOD.');
+    add('Diab Vital One', 75, 'PCOD is strongly linked to insulin resistance — glucose metabolism support is essential.');
+    add('Livo Syrup', 70, 'Liver health supports hormonal clearance — important as liver processes excess androgens in PCOD.');
+  }
+
+  // White discharge / Leucorrhoea
+  if(has('leucorrhoea')){
+    add('Luco-UT One', 98, 'Specifically formulated to manage white vaginal discharge (leucorrhoea), vaginal infections and urinary tract health.');
+    add('Women One', 85, 'Women daily tonic supports overall reproductive health and immunity to prevent recurrence.');
+    add('Ashwa One+ (KSM-66)', 70, 'Adaptogenic support strengthens immunity and reduces stress that can worsen leucorrhoea.');
+  }
+
+  // Vaginal infection / UTI
+  if(has('vaginal_infection')){
+    add('Luco-UT One', 98, 'Directly manages vaginal infection and urinary tract infections — primary recommendation for this condition.');
+    add('Flush One', 88, 'Natural diuretic supports kidney and urinary tract health, flushes infection-causing bacteria.');
+    add('Women One', 80, 'Women daily tonic builds immunity and supports reproductive tract health to prevent recurrence.');
+    add('Gut Fibreal', 72, 'Probiotics (5 billion CFU) restore gut-vaginal microbiome balance — essential for infection prevention.');
+  }
+
+  // PMS / Irregular periods
+  if(has('pms')){
+    add('Sweet 18+', 95, 'Specifically provides relief from PMS symptoms, regulates hormones and supports skin and mood wellness.');
+    add('Women One', 85, 'Women daily tonic regulates menstrual cycle and reduces hormonal fluctuations causing PMS.');
+    add('Cal Mg D', 75, 'Magnesium is clinically shown to reduce PMS cramping, bloating and mood swings.');
+    add('Ashwa One+ (KSM-66)', 70, 'Reduces cortisol and stress hormones that amplify PMS symptoms.');
+  }
+
+  // Fertility support (women)
+  if(has('fertility_women')){
+    add('Hemo 14+', 90, 'Optimal haemoglobin and EPO levels are essential for healthy conception and pregnancy preparation.');
+    add('Women One', 88, 'Women daily tonic supports hormonal balance and reproductive health for fertility.');
+    add('Sweet 18+', 82, 'Hormonal balance, antioxidant support and immunity building essential for fertility preparation.');
+    add('Ashwa One+ (KSM-66)', 78, 'Adaptogenic support reduces stress — a major factor in fertility — and supports hormonal balance.');
+    add('Cal Mg D', 72, 'Calcium, magnesium and D3 support reproductive health and prepare body for conception.');
+  }
+
+  // Row 11 & 12 - Joints (severity based)
+  if(has('joint') || has('arthritis')){
+    if(visceralFat > 10 || (metabolicAge - actualAge) >= 5 || has('osteoarthritis')){
+      add('Joint Flexer', 95, 'Therapeutic formula for moderate-severe joint pain — reduces inflammation, restores mobility and suppresses swelling.');
+    } else {
+      add('Ortho One', 90, 'Glucosamine, chondroitin and collagen complex for cartilage support and preventive joint care.');
+    }
+    add('Krill One', 65, 'Omega-3 EPA+DHA and astaxanthin reduce joint inflammation and support mobility.');
+  }
+
+  // Row 13 - Prostate
+  if(sex === 'male' && (has('prostate') || has('BPH') || has('urinary'))){
+    add('Prostate One', 95, 'Supports optimal prostate function, manages BPH symptoms and maintains healthy urinary flow.');
+    add('Ashwa One+ (KSM-66)', 65, 'Anti-inflammatory and hormonal support beneficial for prostate health.');
+  }
+
+  // Row 14 - Hair
+  if(has('hair') || has('DHT') || has('alopecia')){
+    add('Hair One', 95, 'Blocks DHT, supports hair growth and reduces hair fall while promoting scalp health.');
+    add('Marine Collagen', 70, 'Collagen peptides support hair strength, skin and nail health.');
+  }
+
+  // Row 15 - Lungs
+  if(has('lungs') || has('respiratory') || has('COPD') || has('asthma')){
+    add('Lungs Fuel', 95, 'Comprehensive respiratory support — strengthens lungs and prevents smoking/pollution damage.');
+  }
+
+  // Row 16 - Digestive Function
+  if(has('digestion') || has('gut') || has('constipation') || has('ibs') || has('indigestion') || has('bloating') || has('acidity')){
+    add('GPM Syrup', 92, 'Gut and Piles Management Syrup — first-line recommendation for digestive issues. Promotes healthy digestion, regulates bowel movements and relieves bloating and constipation.');
+    add('Livo Syrup', 78, 'Stimulates digestive juices and bile production to improve digestion and assimilation.');
+    if(has('ibs') || has('chronic')){
+      add('Gut Fibreal', 82, 'Isabgol, inulin and 5 billion CFU probiotics provide additional gut microbiome support for chronic digestive issues.');
+    }
+  }
+
+  // Row 17 - Low Immunity
+  if(wantsImmunity || has('immunity') || has('infection')){
+    add('Gut Fibreal', 75, 'Probiotics strengthen gut immunity and overall immune response.');
+  }
+
+  // Row 18 - Healthy Skin
+  if(has('skin') || goals.includes('skin')){
+    add('Krill One', 75, 'Omega-3 and astaxanthin nourish skin from within, reducing inflammation and aging.');
+    add('Marine Collagen', 80, 'Collagen peptides support skin elasticity, hydration and anti-aging.');
+  }
+
+  // Row 19 - Weight Management
+  if(wantsWeight || has('obesity') || bmi >= 25){
+    add('Fitness One', 88, 'Advanced green tea extract supports detoxification, healthy weight management and metabolism.');
+    add('A-One Lean', 70, 'Balanced nutrition formula promoting healthy weight management and boosting metabolism.');
+    if(has('diabetes') || has('insulin')){
+      add('Carb Cut One', 80, 'White kidney bean extract reduces starch absorption — ideal for diabetic weight management.');
+    }
+  }
+
+  // Row 20 - Diabetes
+  if(has('diabetes') || has('insulin') || has('blood sugar')){
+    add('Diab Vital One', 95, 'Specifically formulated for healthy glucose metabolism — reduces diabetes side effects and supports immunity.');
+    add('Livo Syrup', 75, 'Liver support is essential for glucose metabolism and insulin sensitivity.');
+    add('Carb Cut One', 80, 'Reduces starch digestion and regulates blood glucose levels — directly beneficial for diabetes management.');
+  }
+
+  // Row 21 - Kids (skip for adults)
+
+  // Row 22 - Women General Health
+  if(sex === 'female' && !has('diabetes') && !has('thyroid')){
+    if(age >= 40) add('Amazing 40+', 85, '40+ women daily nutrition addressing hormonal balance, bones and overall wellness.');
+    add('Cal Mg D', 70, 'Essential calcium, magnesium and vitamin D3 for bone health in women.');
+  }
+
+  // Row 23 - Men General Health
+  if(sex === 'male' && conditions.includes('none')){
+    add('Everyday One', 80, 'Complete daily multivitamin foundation providing essential vitamins, minerals and antioxidants.');
+    add('Krill One', 75, 'Omega-3 for cardiovascular, brain and joint health as general maintenance.');
+    add('Cal Mg D', 65, 'Calcium, magnesium and D3 for bone strength and muscle function.');
+  }
+
+  // Row 24 - Allergy
+  if(has('allergy')){
+    add('Ashwa One+ (KSM-66)', 75, 'Adaptogenic support for immune regulation and allergy management.');
+    add('Everyday One', 70, 'Daily multivitamin providing micronutrients that support immune resilience.');
+  }
+
+  // Row 25 - Piles
+  if(has('piles') || has('hemorrhoid')){
+    add('PIL One', 95, 'Natural solution for piles relief — reduces bleeding, hemorrhoid issues and chronic constipation.');
+    add('GPM Syrup', 90, 'Gut and Piles Management Syrup directly supports piles management and regulates bowel movements to prevent recurrence.');
+    add('Gut Fibreal', 75, 'Fibre and probiotics regulate bowel movements and prevent constipation that worsens piles.');
+  }
+
+  // Row 26 - UTI
+  if(has('UTI') || has('urinary tract')){
+    add('Flush One', 90, 'Natural diuretic that manages urinary tract infections and supports kidney function.');
+    add('Luco-UT One', 85, 'Specifically formulated for urinary tract infections and vaginal health in women.');
+  }
+
+  // Row 27 - Eyes
+  if(has('eye') || has('vision') || has('macular')){
+    add('Everyday One', 70, 'Provides essential micronutrients including zinc and selenium that support eye health.');
+  }
+
+  // Row 30 - Kidney
+  if(has('kidney')){
+    add('Livo Syrup', 80, 'Supports kidney function and detoxification pathways.');
+    add('Flush One', 85, 'Aids kidney stone dissolution, acts as natural diuretic and manages UTI.');
+  }
+
+  // Row 32 - Women 40+
+  if(sex === 'female' && age >= 40){
+    add('Amazing 40+', 90, '40+ women daily nutrition — manages menopausal symptoms, bones, joints, skin and hormonal balance.');
+    add('Krill One', 70, 'Omega-3 for cardiovascular, joint and skin health especially important post-40.');
+  }
+
+  // Row 35 - Stress/Insomnia/Depression
+  if(has('stress') || has('insomnia') || has('anxiety') || has('depression')){
+    add('Brain One', 85, 'Cognitive and mood support — ginkgo biloba and bacopa improve mental clarity and reduce anxiety.');
+    add('Ashwa One+ (KSM-66)', 90, 'KSM-66 clinically proven to reduce cortisol, stress and improve sleep quality.');
+    add('Everyday One', 65, 'B-vitamins and magnesium in the daily formula support nervous system and stress resilience.');
+    add('Krill One', 60, 'Omega-3 DHA reduces neuroinflammation and supports mood regulation.');
+  }
+
+  // Row 37 - Anti-cancer / Cellular Health
+  if(has('cancer') || has('cellular') || has('tumor')){
+    add('A9-Onko', 95, 'Ganoderma, lycopene and curcumin C3 provide anti-tumor, cellular health and antioxidant support.');
+    add('Young Fuel', 85, 'NAD+ and cellular energy support for healthy cell function and longevity.');
+    add('Ashwa One+ (KSM-66)', 75, 'Adaptogenic support for immune function and cellular health.');
+    add('Fitness One', 65, 'EGCG from green tea provides antioxidant and anti-aging cellular support.');
+  }
+
+  // General health / no specific conditions
+  if(conditions.includes('none') || conditions.length === 0){
+    add('Everyday One', 80, 'Complete daily multivitamin and mineral foundation for general health maintenance.');
+    add('Krill One', 70, 'Omega-3 for cardiovascular, brain and joint maintenance.');
+  }
+
+  // GPM for any gut-related complaint
+  if(has('digestion') || has('constipation') || has('bloating') || has('acidity') || has('indigestion') || has('gut') || has('ibs') || has('piles')){
+    add('GPM Syrup', 92, 'First-line gut support — GPM Syrup promotes healthy digestion, relieves constipation, bloating and regulates bowel movements effectively.');
+  }
+
+  // Maintenance goal — sustain current health, prevent decline
+  const wantsMaintenance = goals.includes('maintenance');
+  if(wantsMaintenance){
+    add('Everyday One', 85, 'Daily multivitamin and mineral foundation — essential for sustaining current health and filling dietary gaps.');
+    add('Krill One', 75, 'Omega-3 EPA+DHA maintains cardiovascular, brain and joint health — key for long-term maintenance.');
+    if(age >= 40){
+      add('Young Fuel', 80, 'NAD+ levels naturally decline from age 40 — Young Fuel maintains cellular energy and slows metabolic aging.');
+      add('Cal Mg D', 70, 'Calcium, magnesium and vitamin D3 maintain bone density and muscle function — critical for healthy aging.');
+    }
+    if(age < 40){
+      add('Ashwa One+ (KSM-66)', 70, 'Adaptogenic support maintains energy, stress resilience and hormonal balance for sustained wellness.');
+    }
+  }
+
+  // Young Fuel trigger - metabolic age
+  if(age >= 40 || (metabolicAge - actualAge >= 3) || has('metabolic') || has('obesity')){
+    add('Young Fuel', 85, 'NMN and cellular energy support to address accelerated metabolic aging and restore cellular vitality.');
+  }
+
+  // Fitness One - always add for weight/obesity/metabolic/general health (safe as 6th)
+  if(wantsWeight || bmi >= 27 || has('obesity') || has('metabolic') || has('diabetes') || has('liver') || has('fatty liver')){
+    add('Fitness One', 78, 'Advanced green tea extract supports detoxification, healthy weight management, antioxidant protection and metabolic rate improvement.');
+  } else if(wantsAntiAging || wantsEnergy){
+    add('Fitness One', 72, 'Advanced green tea EGCG provides antioxidant, anti-aging and stamina support complementing your wellness goals.');
+  } else {
+    // Include for general health as gentle supportive supplement
+    add('Fitness One', 65, 'Advanced green tea extract provides gentle detoxification, antioxidant support and energy enhancement.');
+  }
+
+  // Sort by score descending
+  scores.sort((a,b) => b.score - a.score);
+
+  // Remove duplicate juice — keep only highest scoring one
+  let juiceFound = false;
+  const juiceNames = ['SBTC Juice', 'AVBT Juice'];
+  const filtered = scores.filter(s => {
+    if(juiceNames.includes(s.name)){
+      if(!juiceFound){ juiceFound=true; return true; }
+      return false;
+    }
+    return true;
+  });
+
+  // ── Smart cap based on clinical complexity ──
+  const clinicalConditions = conditions.filter(c => c !== 'none');
+  const hasMultipleConditions = clinicalConditions.length >= 2;
+  const hasSevereConditions = clinicalConditions.some(c =>
+    ['diabetes','kidney','liver','cancer','thyroid','heart','hypertension'].includes(c.toLowerCase())
+  );
+  const isHealthy = conditions.includes('none') || clinicalConditions.length === 0;
+  const biaWarning = visceralFat >= 8 || (metabolicAge - actualAge) >= 3 || bmi >= 27 || bodyFat > 30;
+
+  let maxSupplements;
+  if(isHealthy && !biaWarning){
+    // Healthy, good BIA — foundation only
+    maxSupplements = 3;
+  } else if(isHealthy && biaWarning){
+    // Healthy but BIA showing early warning signs
+    maxSupplements = 4;
+  } else if(clinicalConditions.length === 1 && !hasSevereConditions){
+    // Single mild condition
+    maxSupplements = 4;
+  } else if(hasMultipleConditions && !hasSevereConditions){
+    // Multiple mild conditions
+    maxSupplements = 5;
+  } else {
+    // Multiple or severe conditions — full clinical stack
+    maxSupplements = 6;
+  }
+
+  console.log('Clinical complexity — conditions:', clinicalConditions.length, 'BIA warning:', biaWarning, 'Max supplements:', maxSupplements);
+
+  return filtered.slice(0, maxSupplements).map(s => ({
+    name: s.name,
+    dosage: getProductDose(s.name),
+    timing: getProductTiming(s.name),
+    reason: s.reason,
+    mrp: getProductMRP(s.name)
+  }));
+}
+
+function getProductDose(name){
+  const doses = {
+    'AVBT Juice':'30 ml diluted in 100 ml water',
+    'SBTC Juice':'30 ml diluted in 100 ml water',
+    'Young Fuel':'1 capsule after breakfast + 1 capsule after dinner',
+    'Ashwa One+ (KSM-66)':'1 capsule after breakfast + 1 capsule after dinner',
+    'Brain One':'1 capsule after breakfast + 1 capsule after dinner',
+    'Liver One':'1 capsule after breakfast + 1 capsule after dinner',
+    'Heart One':'1 capsule after breakfast (after food)',
+    'Joint Flexer':'1 capsule after breakfast + 1 capsule after dinner',
+    'Ortho One':'1 tablet after breakfast + 1 tablet after dinner',
+    'Carb Cut One':'1 capsule 15 min before lunch + 1 capsule 15 min before dinner',
+    'Thyro One':'1 capsule after breakfast + 1 capsule after dinner',
+    'Livo Syrup':'15 ml after breakfast and 15 ml after dinner',
+    'GPM Syrup':'15 ml after breakfast and 15 ml after dinner',
+    'Krill One':'1 softgel after breakfast + 1 softgel after dinner',
+    'Gut Fibreal':'1 sachet in a glass of water at bedtime',
+    'Hemo 14+':'1 capsule after breakfast + 1 capsule after dinner',
+    'Cal Mg D':'1 tablet after dinner (after food)',
+    'Hair One':'1 capsule after breakfast + 1 capsule after dinner',
+    'Fitness One':'1 tablet after breakfast + 1 tablet after dinner',
+    'A-One Lean':'1 scoop in water or low-fat milk after breakfast',
+    'Diab Vital One':'1 tablet after breakfast + 1 tablet after dinner',
+    'Amazing 40+':'1 tablet after breakfast + 1 tablet after dinner',
+    'Sweet 18+':'1 capsule after breakfast + 1 capsule after dinner',
+    'Prostate One':'1 capsule after breakfast + 1 capsule after dinner',
+    'Vitality Fuel H':'1 capsule after breakfast + 1 capsule after dinner',
+    'Vitality Fuel E':'1 capsule after breakfast',
+    'Women One':'15 ml after breakfast and 15 ml after dinner',
+    'Marine Collagen':'1 scoop in water after breakfast',
+    'Uric One':'1 capsule after breakfast + 1 capsule after dinner',
+    'Flush One':'1 capsule after breakfast + 1 capsule after dinner',
+    'Flax ALA':'1 softgel after breakfast + 1 softgel after dinner',
+    'Argi One':'1 sachet dissolved in water after breakfast',
+    'Diab-O-Sip Coffee':'1 sachet in hot water as morning coffee after breakfast',
+    'PIL One':'1 capsule after breakfast + 1 capsule after dinner',
+    'Luco-UT One':'15 ml after breakfast and 15 ml after dinner',
+    'A9-Onko':'1 capsule after breakfast + 1 capsule after dinner',
+    'Lungs Fuel':'1 capsule after breakfast + 1 capsule after dinner',
+    'Everyday One':'1 tablet after breakfast',
+    'WLB One':'1 capsule after breakfast + 1 capsule after dinner',
+  };
+  return doses[name] || '1-2 units after food';
+}
+
+function getProductTiming(name){
+  const timings = {
+    'AVBT Juice':'Morning after breakfast',
+    'SBTC Juice':'Morning after breakfast',
+    'Carb Cut One':'15 minutes before lunch and dinner',
+    'Gut Fibreal':'At bedtime after dinner',
+    'Livo Syrup':'After breakfast and after dinner',
+    'GPM Syrup':'After breakfast and after dinner',
+    'Women One':'After breakfast and after dinner',
+    'Luco-UT One':'After breakfast and after dinner',
+    'Argi One':'After breakfast',
+    'Diab-O-Sip Coffee':'Morning after breakfast',
+    'Marine Collagen':'After breakfast',
+    'A-One Lean':'After breakfast',
+    'Vitality Fuel E':'After breakfast',
+    'Everyday One':'After breakfast',
+    'Cal Mg D':'After dinner only (calcium absorbs better at night)',
+  };
+  return timings[name] || 'After breakfast and after dinner (always after food)';
+}
+
+async function generatePlan(){
+  const patientName=getVal('patientName'),age=getVal('age'),sex=getVal('sex'),height=getVal('height'),weight=getVal('weight');
+  const errorMsg=document.getElementById('errorMsg');
+  if(!patientName||!age||!sex||!height||!weight){errorMsg.style.display='block';return;}
+  errorMsg.style.display='none';
+
+  const bmi=getVal('bmi'),bodyFat=getVal('bodyFat'),muscleMass=getVal('muscleMass'),muscleRate=getVal('muscleRate');
+  const visceralFat=getVal('visceralFat'),bmr=getVal('bmr'),boneMass=getVal('boneMass'),bodyWater=getVal('bodyWater');
+  const metabolicAge=getVal('metabolicAge'),activity=getVal('activity'),goal=getVal('goal');
+  const notes=getVal('notes'),dietitian=getVal('dietitian');
+  const conditions=[
+    ...Array.from(document.querySelectorAll('.condition-chip input:checked')).map(c=>c.value),
+    ...getWomensConditions()
+  ];
+
+  lastPatientData={patientName,age,sex,height,weight,bmi,bodyFat,muscleMass,muscleRate,visceralFat,bmr,boneMass,bodyWater,metabolicAge,activity,goal,conditions,notes,dietitian};
+
+  const btn=document.getElementById('generateBtn');
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner"></div> Generating plan for '+patientName+'...';
+  document.getElementById('resultCard').classList.remove('visible');
+  document.getElementById('suppSection').style.display='none';
+
+  // Build product catalogue string for AI
+  
+  const prompt=`You are a clinical dietitian at S A Yoga Classes. Generate a concise personalised diet plan in English. Keep each section brief — max 3-4 lines. Total response must be under 700 words.
+
+CLIENT:
+- Name: ${patientName}, Age: ${age}y, Sex: ${sex}, Height: ${height}cm, Weight: ${weight}kg
+${bmi?`- BMI: ${bmi}`:''}${bodyFat?`, Body fat: ${bodyFat}%`:''}${muscleMass?`, Muscle mass: ${muscleMass}kg`:''}${muscleRate?`, Muscle rate: ${muscleRate}%`:''}
+${visceralFat?`- Visceral fat: ${visceralFat}`:''}${bmr?`, BMR: ${bmr} kcal`:''}${boneMass?`, Bone: ${boneMass}kg`:''}${bodyWater?`, Body water: ${bodyWater}%`:''}${metabolicAge?`, Metabolic age: ${metabolicAge}`:''}
+- Activity: ${activity}, Goal: ${goal}
+- Conditions: ${conditions.filter(c=>!['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'].includes(c)).join(', ')||'none'}
+${conditions.some(c=>['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'].includes(c)) ? "- Women's health: "+conditions.filter(c=>['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'].includes(c)).join(', ') : ''}
+${notes?`- Notes: ${notes}`:''}
+
+Structure your response EXACTLY like this:
+
+DIET_PLAN_START
+1. CLINICAL ASSESSMENT
+(3-4 lines — key findings only)
+
+2. CALORIE TARGET
+(BMR x activity factor = TDEE, recommended intake, one line reason)
+
+3. MACRO TARGETS
+- Protein: Xg/day — reason
+- Carbs: Xg/day — reason
+- Fat: Xg/day — reason
+
+4. CLINICAL ADJUSTMENTS & REASONING
+(One line per condition maximum)
+
+5. SAMPLE MEAL PLAN — 1 DAY
+Breakfast: [food + portion]
+Mid-morning: [food + portion]
+Lunch: [food + portion]
+Evening snack: [food + portion]
+Dinner: [food + portion]
+
+6. FOODS TO PRIORITISE
+- [food and why]
+- [food and why]
+- [food and why]
+- [food and why]
+- [food and why]
+- [food and why]
+- [food and why]
+- [food and why]
+
+7. FOODS TO LIMIT OR AVOID
+- [food and why]
+- [food and why]
+- [food and why]
+- [food and why]
+- [food and why]
+
+8. WEEKLY MONITORING
+- [metric 1]
+- [metric 2]
+- [metric 3]
+- [metric 4]
+DIET_PLAN_END
+
+Be specific and Indian diet compatible.`;
+
+  // Wake up server then generate
+  const backendUrl='https://sa-yoga-backend.onrender.com';
+  btn.innerHTML='<div class="spinner"></div> Connecting to server...';
+  
+  // Ping to wake up Render free tier
+  let wakeAttempts=0;
+  while(wakeAttempts<5){
+    wakeAttempts++;
+    try{
+      btn.innerHTML='<div class="spinner"></div> Starting up server... ('+wakeAttempts+'/5)';
+      const wr=await fetch(backendUrl+'/health',{signal:AbortSignal.timeout(12000)});
+      if(wr.ok) break;
+    }catch(e){ await new Promise(r=>setTimeout(r,3000)); }
+  }
+  
+  btn.innerHTML='<div class="spinner"></div> Generating plan for '+patientName+'...';
+  
+  let fullText='';
+  let attempts=0;
+  const maxAttempts=3;
+  
+  while(attempts<maxAttempts){
+    attempts++;
+    try{
+      const controller=new AbortController();
+      const tid=setTimeout(()=>controller.abort(),90000);
+      const resp=await fetch(backendUrl+'/generate',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({prompt}),
+        signal:controller.signal
+      });
+      clearTimeout(tid);
+      const d=await resp.json();
+      fullText=d.text||'';
+      if(fullText) break;
+      if(attempts<maxAttempts) await new Promise(r=>setTimeout(r,2000));
+    }catch(e){
+      console.error('Attempt '+attempts+' failed:',e.message);
+      if(attempts<maxAttempts){
+        btn.innerHTML='<div class="spinner"></div> Retrying... ('+attempts+'/'+maxAttempts+')';
+        await new Promise(r=>setTimeout(r,3000));
+      }
+    }
+  }
+  if(!fullText) fullText='No response.';
+
+  try{
+  // Split plan and supplements
+    // Extract diet plan - clean all markers
+    let cleanText = fullText
+      .replace(/DIET_PLAN_START|DIET_PLAN_END|SUPPLEMENTS_START|SUPPLEMENTS_END/g,'')
+      .replace(/PRODUCT:[\s\S]*$/,'')
+      .trim();
+    lastPlanText = cleanText;
+
+    // Rule-based supplement selection from catalogue
+    lastSupplements = selectSupplements(lastPatientData);
+    console.log('Plan length:', lastPlanText.length, 'Supplements selected:', lastSupplements.length);
+
+    document.getElementById('resultTitle').textContent='Diet Plan — '+patientName;
+    // Clean up any remaining markers from display
+    const cleanPlan = lastPlanText
+      .replace(/DIET_PLAN_START|DIET_PLAN_END|SUPPLEMENTS_START|SUPPLEMENTS_END/g,'')
+      .replace(/^#+\s/gm,'')
+      .replace(/\*\*/g,'')
+      .trim();
+    lastPlanText = cleanPlan;
+    document.getElementById('resultContent').textContent=cleanPlan;
+    renderSupplements();
+    document.getElementById('resultCard').classList.add('visible');
+    document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
+  }catch(e){
+    document.getElementById('resultContent').textContent='Server took too long to respond. Please click Generate again — it should work now that the server is awake.';
+    document.getElementById('resultCard').classList.add('visible');
+  }
+  btn.disabled=false;
+  btn.innerHTML='✦ Generate diet plan + supplement recommendations';
+}
+
+function parseSupplements(text){
+  const supplements=[];
+  // Clean up markdown symbols first
+  const cleaned = text.replace(/\*\*/g,'').replace(/^#+\s/gm,'');
+  const blocks=cleaned.split(/PRODUCT:/i).slice(1);
+  blocks.forEach(block=>{
+    const nameMatch=block.match(/^\s*([^\n]+)/);
+    const dosageMatch=block.match(/DOSAGE:\s*([^\n]+)/i);
+    const timingMatch=block.match(/TIMING:\s*([^\n]+)/i);
+    const reasonMatch=block.match(/REASON:\s*([^\n]+(?:\n(?!PRODUCT:|DOSAGE:|TIMING:|REASON:)[^\n]+)*)/i);
+    if(nameMatch){
+      const name=(nameMatch[1]||'').trim().replace(/^[\d\.\s]+/,'').replace(/\*\*/g,'');
+      if(name.length > 1){
+        supplements.push({
+          name:name,
+          dosage:(dosageMatch?dosageMatch[1]:'').trim().replace(/\*\*/g,''),
+          timing:(timingMatch?timingMatch[1]:'').trim().replace(/\*\*/g,''),
+          reason:(reasonMatch?reasonMatch[1]:'').trim().replace(/\n/g,' ').replace(/\*\*/g,'')
+        });
+      }
+    }
+  });
+  console.log('Parsed supplements:', supplements.length);
+  return supplements.slice(0,5);
+}
+
+function renderSupplements(){
+  const section=document.getElementById('suppSection');
+  const list=document.getElementById('suppList');
+  if(!lastSupplements||lastSupplements.length===0){section.style.display='none';return;}
+  list.innerHTML='';
+  let totalMRP = 0;
+  lastSupplements.forEach(s=>{
+    if(s.mrp) totalMRP += s.mrp;
+    const item=document.createElement('div');
+    item.className='supp-item';
+    item.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;">
+      <div class="supp-name">💊 ${s.name}</div>
+      ${s.mrp ? `<div style="font-size:12px;font-weight:700;color:var(--teal);background:var(--teal-light);padding:2px 10px;border-radius:20px;">₹${s.mrp} MRP</div>` : ''}
+    </div>
+    <div class="supp-detail"><strong>Dosage:</strong> ${s.dosage} &nbsp;|&nbsp; <strong>Timing:</strong> ${s.timing}</div>
+    <div class="supp-detail"><strong>Why:</strong> ${s.reason}</div>`;
+    list.appendChild(item);
+  });
+  // Show total MRP
+  const totalBox = document.getElementById('totalMRPBox');
+  const totalAmt = document.getElementById('totalMRPAmount');
+  if(totalMRP > 0 && totalBox && totalAmt){
+    totalBox.style.display='flex';
+    totalAmt.textContent = '₹' + totalMRP.toLocaleString('en-IN');
+  }
+  section.style.display='block';
+}
+
+function resetForm(){
+  document.querySelectorAll('input[type="text"],input[type="number"],textarea').forEach(el=>el.value='');
+  document.querySelectorAll('select').forEach(el=>el.selectedIndex=0);
+  document.getElementById('activity').value='moderate';
+  document.querySelectorAll('.condition-chip input, input[name="goal"], #womens-health-sub input').forEach(cb=>{cb.checked=false;cb.closest('.condition-chip').classList.remove('active');});
+  document.getElementById('goal-error').style.display='none';
+  document.getElementById('womens-health-sub').style.display='none';
+  document.getElementById('womens-arrow').textContent='▼';
+  document.getElementById('womens-health-chip').classList.remove('active');
+  document.querySelectorAll('[id^="flag-"]').forEach(el=>el.innerHTML='');
+  document.getElementById('resultCard').classList.remove('visible');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function exportPDF(){
+  if(!lastPlanText) return;
+  const pdfBtn=document.getElementById('pdfBtn');
+  pdfBtn.disabled=true;pdfBtn.innerHTML='⏳ Building PDF...';
+  try{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pageW=doc.internal.pageSize.getWidth();
+    const pageH=doc.internal.pageSize.getHeight();
+    const margin=20;const contentW=pageW-margin*2-4;let y=0;
+    const checkY=(needed)=>{if(y+needed>pageH-20){doc.addPage();y=22;}};
+
+    // Header
+    doc.setFillColor(15,76,76);doc.rect(0,0,pageW,30,'F');
+    doc.setFillColor(201,168,76);doc.rect(0,30,pageW,1.5,'F');
+    const lx=18,ly=15;
+    doc.setFillColor(26,107,107);doc.ellipse(lx,ly-7,3,7,'F');
+    doc.setFillColor(201,168,76);doc.ellipse(lx-3,ly-5,2.5,6,'F');doc.ellipse(lx+3,ly-5,2.5,6,'F');
+    doc.setFillColor(240,208,128);doc.ellipse(lx,ly-5,2,5,'F');
+    doc.setFillColor(201,168,76);doc.circle(lx,ly,2.5,'F');
+    doc.setFillColor(240,208,128);doc.circle(lx,ly,1.2,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');
+    doc.text('S A YOGA CLASSES',30,13);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.setTextColor(201,168,76);doc.text('WELLNESS  ·  BALANCE  ·  STRENGTH',30,20);
+    doc.setTextColor(180,210,210);doc.text('CLIENT DIET PLAN + SUPPLEMENT REPORT',30,26);
+    doc.text(new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),pageW-margin,20,{align:'right'});
+    y=38;
+
+    // Patient card
+    const pd=lastPatientData;
+    doc.setFillColor(232,244,244);doc.setDrawColor(90,154,154);
+    doc.roundedRect(margin,y,contentW,44,3,3,'FD');
+    doc.setFillColor(15,76,76);doc.roundedRect(margin,y,3,44,1,1,'F');
+    doc.setTextColor(15,76,76);doc.setFontSize(11);doc.setFont('helvetica','bold');
+    doc.text(pd.patientName||'Client',margin+7,y+8);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(74,104,101);
+    const r1=`Age: ${pd.age}y   Sex: ${pd.sex}   Height: ${pd.height}cm   Weight: ${pd.weight}kg${pd.bmi?'   BMI: '+pd.bmi:''}`;
+    const rp=[];
+    if(pd.bodyFat) rp.push('Body fat: '+pd.bodyFat+'%');
+    if(pd.muscleMass) rp.push('Muscle mass: '+pd.muscleMass+'kg');
+    if(pd.muscleRate) rp.push('Muscle rate: '+pd.muscleRate+'%');
+    if(pd.visceralFat) rp.push('Visceral fat: '+pd.visceralFat);
+    if(pd.bmr) rp.push('BMR: '+pd.bmr+' kcal');
+    if(pd.boneMass) rp.push('Bone: '+pd.boneMass+'kg');
+    if(pd.bodyWater) rp.push('Body water: '+pd.bodyWater+'%');
+    if(pd.metabolicAge) rp.push('Metabolic age: '+pd.metabolicAge);
+    const r3=`Goal: ${pd.goal}   Activity: ${pd.activity}${pd.conditions&&pd.conditions.length?'   Conditions: '+pd.conditions.join(', '):''}`;
+    const r4=pd.dietitian?`Prepared by: ${pd.dietitian}   |   S A Yoga Classes`:'Prepared by: S A Yoga Classes';
+    doc.text(r1,margin+7,y+16,{maxWidth:contentW-12});
+    if(rp.length) doc.text(rp.join('   '),margin+7,y+23,{maxWidth:contentW-12});
+    doc.text(r3,margin+7,y+30,{maxWidth:contentW-12});
+    doc.setTextColor(201,168,76);doc.text(r4,margin+7,y+38,{maxWidth:contentW-12});
+    y+=52;
+
+    // Reference ranges table
+    checkY(65);
+    doc.setFillColor(15,76,76);doc.roundedRect(margin,y,contentW,8,2,2,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
+    doc.text('BIA Reference Ranges',margin+4,y+5.5);
+    doc.setTextColor(201,168,76);doc.setFontSize(7.5);
+    doc.text('Standard clinical ranges — male vs female',margin+58,y+5.5);
+    y+=10;
+    const cols=[52,20,24,20,20,24,20];
+    const headers=['Parameter','M Low','M Normal','M High','F Low','F Normal','F High'];
+    const rows=[
+      ['BMI','<18.5','18.5–24.9','25+','<18.5','18.5–24.9','25+'],
+      ['Body fat %','<8%','8–19%','>25%','<21%','21–33%','>39%'],
+      ['Muscle mass (kg)','<29','29–44','>44','<20','20–31','>31'],
+      ['Muscle rate %','<40%','40–50%','>55%','<30%','30–40%','>45%'],
+      ['Visceral fat','1–9 Normal','—','10+ High','1–9 Normal','—','10+ High'],
+      ['Bone mass (kg)','<2.5','2.5–3.5','>3.5','<1.8','1.8–2.8','>2.8'],
+      ['Body water %','<50%','50–65%','>70%','<45%','45–60%','>65%'],
+      ['BMR (kcal/day)','<1500','1500–2000','>2200','<1200','1200–1600','>1800'],
+    ];
+    doc.setFillColor(26,107,107);doc.rect(margin,y,contentW,7,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+    let cx=margin;
+    headers.forEach((h,i)=>{doc.text(h,cx+1,y+5);cx+=cols[i];});
+    y+=7;
+    rows.forEach((row,ri)=>{
+      checkY(7);
+      doc.setFillColor(ri%2===0?248:241,ri%2===0?250:245,ri%2===0?249:244);
+      doc.rect(margin,y,contentW,7,'F');
+      doc.setDrawColor(220,230,228);doc.line(margin,y+7,margin+contentW,y+7);
+      cx=margin;
+      row.forEach((cell,ci)=>{
+        if(ci===0){doc.setFont('helvetica','bold');doc.setTextColor(15,76,76);}
+        else if(ci===2||ci===5){doc.setTextColor(6,95,70);doc.setFont('helvetica','normal');}
+        else if(ci===3||ci===6){doc.setTextColor(153,27,27);doc.setFont('helvetica','normal');}
+        else{doc.setTextColor(120,83,0);doc.setFont('helvetica','normal');}
+        doc.text(cell,cx+1,y+5,{maxWidth:cols[ci]-2});
+        cx+=cols[ci];
+      });
+      y+=7;
+    });
+    // Client status row
+    const sex=pd.sex;
+    if(sex&&RANGES[sex]){
+      checkY(12);
+      doc.setFillColor(232,244,232);doc.rect(margin,y+2,contentW,9,'F');
+      doc.setTextColor(6,95,70);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+      doc.text('Client status:',margin+2,y+8);
+      doc.setFont('helvetica','normal');
+      const sp=[];
+      if(pd.bodyFat){const r=RANGES[sex].bodyFat;const v=parseFloat(pd.bodyFat);sp.push('Body fat: '+(v<r.low?'Low':v<=r.high?'Normal':'High'));}
+      if(pd.muscleMass){const r=RANGES[sex].muscleMass;const v=parseFloat(pd.muscleMass);sp.push('Muscle mass: '+(v<r.low?'Low':v<=r.high?'Normal':'High'));}
+      if(pd.muscleRate){const r=RANGES[sex].muscleRate;const v=parseFloat(pd.muscleRate);sp.push('Muscle rate: '+(v<r.low?'Low':v<=r.high?'Normal':'High'));}
+      if(pd.visceralFat){const v=parseFloat(pd.visceralFat);sp.push('Visceral fat: '+(v<=9?'Normal':v<=14?'High':'Very High'));}
+      if(pd.boneMass){const r=RANGES[sex].boneMass;const v=parseFloat(pd.boneMass);sp.push('Bone mass: '+(v<r.low?'Low':v<=r.high?'Normal':'High'));}
+      if(sp.length) doc.text(sp.join('   '),margin+28,y+8,{maxWidth:contentW-30});
+      y+=14;
+    }else{y+=4;}
+    y+=6;
+
+    // Diet plan content
+    const lines=lastPlanText.split('\n');
+    for(const line of lines){
+      const trimmed=line.trim();
+      if(!trimmed){y+=2;continue;}
+      // Header = numbered section titles in ALL CAPS, or full ALL CAPS lines
+        const isHeader=((/^[1-8]\.\s+[A-Z]/.test(trimmed)) && trimmed===trimmed.toUpperCase()) 
+          || /^[A-Z][A-Z\s&\-—:]{8,}$/.test(trimmed)
+          || /^DIET_PLAN|^SUPPLEMENTS/.test(trimmed);
+      const isBullet=/^[-•*]\s/.test(trimmed)||/^\d+[.):]\s/.test(trimmed);
+      if(isHeader){
+        checkY(16);y+=5;
+        // Gold header bar with white text for clear section differentiation
+        doc.setFillColor(201,168,76);
+        doc.setDrawColor(139,110,30);
+        const wl=doc.splitTextToSize(trimmed,contentW-14);
+        const bh=wl.length*6+8;
+        doc.roundedRect(margin,y,contentW,bh,2,2,'FD');
+        // Dark teal left accent
+        doc.setFillColor(15,76,76);
+        doc.roundedRect(margin,y,4,bh,1,1,'F');
+        // White text on gold
+        doc.setTextColor(255,255,255);
+        doc.setFontSize(9.5);
+        doc.setFont('helvetica','bold');
+        wl.forEach((w,i)=>doc.text(w,margin+8,y+6+i*6));
+        y+=bh+5;
+        doc.setTextColor(30,52,50);doc.setFontSize(8);doc.setFont('helvetica','normal');
+      }else if(isBullet){
+        const bt=trimmed.replace(/^[-•*]\s*/,'').replace(/^\d+[.):,]\s*/,'');
+        const wl=doc.splitTextToSize(bt,contentW-9);
+        checkY(wl.length*5+3);
+        doc.setFillColor(15,76,76);doc.circle(margin+2.2,y+2,1,'F');
+        doc.setTextColor(51,65,65);doc.setFontSize(8);doc.setFont('helvetica','normal');
+        wl.forEach((w,i)=>doc.text(w,margin+6,y+3+i*4.5));
+        y+=wl.length*4.5+2;
+      }else{
+        const isNumbered = /^\d+\.\s/.test(trimmed);
+        if(isNumbered){
+          // Numbered items - teal dot + text, no box
+          const bt=trimmed.replace(/^\d+\.\s*/,'');
+          const wl=doc.splitTextToSize(bt, contentW-8);
+          checkY(wl.length*4.5+3);
+          doc.setFillColor(15,76,76);
+          doc.circle(margin+2,y+2.5,1.2,'F');
+          doc.setTextColor(51,65,65);doc.setFontSize(8.5);doc.setFont('helvetica','normal');
+          wl.forEach((w,i)=>doc.text(w,margin+6,y+3.5+i*4.5,{maxWidth:contentW-8}));
+          y+=wl.length*4.5+3;
+        } else {
+          doc.setTextColor(51,65,65);doc.setFontSize(8.5);doc.setFont('helvetica','normal');
+          const wl=doc.splitTextToSize(trimmed,contentW);
+          checkY(wl.length*4.5+2);
+          wl.forEach(w=>{doc.text(w,margin,y+4,{maxWidth:contentW});y+=4.5;});
+        }
+      }
+    }
+
+    // Supplement section - ALWAYS start on a new page
+    if(lastSupplements&&lastSupplements.length>0){
+      doc.addPage();
+      y=22;
+      // Full width gold header for supplement page
+      doc.setFillColor(15,76,76);
+      doc.rect(0,0,pageW,18,'F');
+      doc.setFillColor(201,168,76);
+      doc.rect(0,18,pageW,2,'F');
+      doc.setTextColor(255,255,255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica','bold');
+      doc.text('Recommended Supplements',margin,13);
+      doc.setFontSize(8);
+      doc.setFont('helvetica','normal');
+      doc.setTextColor(201,168,76);
+      doc.text('Herbonutrigenx — Personalised for '+pd.patientName,margin,20,{align:'left'});
+      doc.setTextColor(201,168,76);
+      doc.text('Products selected based on your clinical profile',pageW-margin,13,{align:'right'});
+      y=28;
+      lastSupplements.forEach((s,i)=>{
+        // Calculate dynamic card height
+        const nameText = `${i+1}. ${s.name}${s.mrp ? '  —  MRP: ₹'+s.mrp : ''}`;
+        const dosageText = s.dosage ? `How to take: ${s.dosage}   |   When: ${s.timing}` : '';
+        const reasonText = s.reason ? `Why: ${s.reason}` : '';
+        
+        const nameLines = doc.splitTextToSize(nameText, contentW-14);
+        const dosageLines = dosageText ? doc.splitTextToSize(dosageText, contentW-14) : [];
+        const reasonLines = reasonText ? doc.splitTextToSize(reasonText, contentW-14) : [];
+        
+        const totalH = (nameLines.length * 5) + (dosageLines.length * 4.5) + (reasonLines.length * 4.5) + 14;
+        checkY(totalH);
+        
+        doc.setFillColor(251,244,224);doc.setDrawColor(201,168,76);
+        doc.roundedRect(margin,y,contentW,totalH,2,2,'FD');
+        doc.setFillColor(201,168,76);doc.roundedRect(margin,y,3,totalH,1,1,'F');
+        
+        let cardY = y + 6;
+        doc.setTextColor(15,76,76);doc.setFontSize(9);doc.setFont('helvetica','bold');
+        nameLines.forEach(l => { doc.text(l, margin+7, cardY); cardY += 5; });
+        
+        doc.setFont('helvetica','normal');doc.setTextColor(74,104,101);doc.setFontSize(8);
+        if(dosageLines.length){
+          cardY += 1;
+          dosageLines.forEach(l => { doc.text(l, margin+7, cardY); cardY += 4.5; });
+        }
+        if(reasonLines.length){
+          cardY += 1;
+          reasonLines.forEach(l => { doc.text(l, margin+7, cardY); cardY += 4.5; });
+        }
+        y += totalH + 4;
+      });
+      // Total MRP box in PDF
+      const totalPDFMRP = lastSupplements.reduce((sum, s) => sum + (s.mrp || 0), 0);
+      if(totalPDFMRP > 0){
+        checkY(16);
+        doc.setFillColor(232,244,244);doc.setDrawColor(15,76,76);
+        doc.roundedRect(margin,y,contentW,12,2,2,'FD');
+        doc.setFillColor(15,76,76);doc.roundedRect(margin,y,3,12,1,1,'F');
+        doc.setTextColor(15,76,76);doc.setFontSize(9);doc.setFont('helvetica','bold');
+        doc.text('Estimated Monthly Investment (MRP)',margin+7,y+5.5);
+        doc.setFontSize(11);
+        doc.text('₹'+totalPDFMRP.toLocaleString('en-IN'),pageW-margin,y+7.5,{align:'right'});
+        doc.setFontSize(7.5);doc.setFont('helvetica','italic');doc.setTextColor(90,154,154);
+        doc.text('MRP prices as per May 2026 price list. PCP/member pricing available.',margin+7,y+10);
+        y+=16;
+      }
+
+      // Allopathy warning box
+      checkY(20);
+      doc.setFillColor(255,243,205);doc.setDrawColor(201,168,76);
+      doc.roundedRect(margin,y,contentW,16,2,2,'FD');
+      doc.setFillColor(201,168,76);doc.roundedRect(margin,y,3,16,1,1,'F');
+      doc.setTextColor(120,80,0);doc.setFontSize(8);doc.setFont('helvetica','bold');
+      doc.text('Important — Allopathy Medicine Gap:',margin+7,y+6);
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+      doc.text('If you are on any prescription or allopathy medicines, maintain a minimum gap of 90 minutes to 2 hours between',margin+7,y+11,{maxWidth:contentW-10});
+      doc.text('your allopathy medicine and these supplements to ensure safe absorption and avoid any interactions.',margin+7,y+15.5,{maxWidth:contentW-10});
+      y+=20;
+      checkY(12);
+      // Official bilingual disclaimer box
+      checkY(28);
+      doc.setFillColor(245,245,245);doc.setDrawColor(180,180,180);
+      doc.roundedRect(margin,y,contentW,26,2,2,'FD');
+      doc.setTextColor(80,80,80);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
+      doc.text('Disclaimer | अस्वीकरण',margin+4,y+6);
+      doc.setFont('helvetica','normal');doc.setFontSize(7);
+      const line1='These products are not intended to treat, diagnose or cure any disease. Pregnant / Lactating women or Children under 18 years of age should consult physician before use.';
+      const line2='Do not exceed the suggested amount. Discontinue use if any side effect occurs.';
+      const line3='इन उत्पादों का उद्देश्य किसी बीमारी का इलाज, निदान या इलाज नहीं करना है। गर्भवती / स्तनपान कराने वाली महिलाओं या 18 वर्ष से कम उम्र के बच्चों को उपयोग करने से पहले चिकित्सक से परामर्श लेना चाहिए।';
+      const line1w=doc.splitTextToSize(line1,contentW-8);
+      const line2w=doc.splitTextToSize(line2,contentW-8);
+      line1w.forEach((l,i)=>doc.text(l,margin+4,y+11+i*4));
+      line2w.forEach((l,i)=>doc.text(l,margin+4,y+11+line1w.length*4+i*4));
+      doc.setTextColor(100,100,100);
+      doc.text('Do not exceed suggested amount. Discontinue if side effects occur.',margin+4,y+22,{maxWidth:contentW-8});
+      y+=30;
+    }
+
+    // Footer
+    const totalPages=doc.internal.getNumberOfPages();
+    for(let i=1;i<=totalPages;i++){
+      doc.setPage(i);
+      doc.setFillColor(15,76,76);doc.rect(0,pageH-14,pageW,14,'F');
+      doc.setFillColor(201,168,76);doc.rect(0,pageH-14,pageW,1,'F');
+      doc.setTextColor(180,210,210);doc.setFontSize(7);doc.setFont('helvetica','italic');
+      doc.text('Disclaimer: These products are not intended to treat, diagnose or cure any disease. Pregnant/Lactating women or children under 18 consult physician before use.',margin,pageH-6,{maxWidth:pageW-margin*2-20});
+      doc.setFont('helvetica','normal');doc.setTextColor(201,168,76);
+      doc.text(`Page ${i} of ${totalPages}`,pageW-margin,pageH-6,{align:'right'});
+    }
+
+    const safeName=(pd.patientName||'client').toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+    doc.save(`SA_Yoga_Plan_${safeName}_${new Date().toISOString().slice(0,10)}.pdf`);
+  }catch(err){alert('PDF error: '+err.message);}
+  pdfBtn.disabled=false;
+  pdfBtn.innerHTML='⬇ Download PDF Report';
+}
+</script>
+</body>
+</html>
