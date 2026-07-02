@@ -710,6 +710,33 @@ function getProductMRP(name){
 }
 
 
+function renderSupplements(){
+  const section=document.getElementById('suppSection');
+  const list=document.getElementById('suppList');
+  if(!lastSupplements||lastSupplements.length===0){section.style.display='none';return;}
+  list.innerHTML='';
+  let totalMRP=0;
+  lastSupplements.forEach(s=>{
+    if(s.mrp) totalMRP+=s.mrp;
+    const item=document.createElement('div');
+    item.className='supp-item';
+    item.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;">'
+      +'<div class="supp-name">&#128138; '+s.name+'</div>'
+      +(s.mrp?'<div style="font-size:12px;font-weight:700;color:var(--teal);background:var(--teal-light);padding:2px 10px;border-radius:20px;">&#8377;'+s.mrp+' MRP</div>':'')
+      +'</div>'
+      +'<div class="supp-detail"><strong>Dosage:</strong> '+s.dosage+' &nbsp;|&nbsp; <strong>Timing:</strong> '+s.timing+'</div>'
+      +'<div class="supp-detail"><strong>Why:</strong> '+s.reason+'</div>';
+    list.appendChild(item);
+  });
+  const totalBox=document.getElementById('totalMRPBox');
+  const totalAmt=document.getElementById('totalMRPAmount');
+  if(totalMRP>0&&totalBox&&totalAmt){
+    totalBox.style.display='flex';
+    totalAmt.textContent='&#8377;'+totalMRP.toLocaleString('en-IN');
+  }
+  section.style.display='block';
+}
+
 async function generatePlan(){
   // Basic validation
   const patientName=getVal('patientName'),age=getVal('age'),sex=getVal('sex'),height=getVal('height'),weight=getVal('weight');
