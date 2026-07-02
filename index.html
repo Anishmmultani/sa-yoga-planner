@@ -253,9 +253,10 @@ function getVal(id){const el=document.getElementById(id);return el?el.value.trim
 let mealPlanDuration='1day';
 
 function setMealPlan(type){
-  mealPlanDuration=type;
+  mealPlanDuration = type;
   document.getElementById('meal-1day-chip').classList.toggle('active', type==='1day');
   document.getElementById('meal-7day-chip').classList.toggle('active', type==='7day');
+  console.log('Meal plan set to:', mealPlanDuration);
 }
 
 let lastPlanText='';
@@ -275,6 +276,10 @@ function selectSupplements(pd){
   const sex = (pd.sex || '').toLowerCase();
 
   const has = (c) => conditions.some(x => x.toLowerCase().includes(c.toLowerCase()));
+  
+  // Pre-calculate severity flags used across multiple rules
+  const hasSevereCondition = ()=> has('diabetes') || has('hypertension') || has('heart') || 
+    has('kidney') || has('liver') || has('joints') || has('arthritis') || has('thyroid') || has('cancer');
   const wantsWeight = goals.includes('fat') || goals.includes('weight') || goals.includes('recomp') || goals.includes('lean');
   const wantsAntiAging = goals.includes('anti') || goals.includes('longevity') || goals.includes('aging');
   const wantsEnergy = goals.includes('energy') || goals.includes('stamina');
@@ -305,10 +310,15 @@ function selectSupplements(pd){
 
   // ── STEP 2: Apply official catalogue suggestion list ──
   // Row 1 - Anti-aging
-  if(wantsAntiAging || age >= 40 || (metabolicAge - actualAge >= 3)){
-    add('Young Fuel', 90, 'NAD+ and cellular energy support — essential given accelerated metabolic age and anti-aging goals.');
+  // Young Fuel only if NO severe clinical conditions
+  if((wantsAntiAging || age >= 45 || (metabolicAge - actualAge >= 5)) && !hasSevereCondition()){
+    add('Young Fuel', 88, 'NAD+ and cellular energy support — ideal as no active clinical conditions competing for supplementation priority.');
     add('Ashwa One+ (KSM-66)', 70, 'Adaptogenic support for anti-aging, hormonal balance and stress management.');
     add('Krill One', 60, 'Omega-3 DHA+EPA and astaxanthin for anti-aging, joint and cardiovascular support.');
+  } else if(wantsAntiAging && hasSevereCondition()){
+    // When anti-aging goal with clinical conditions - use SBTC/Krill instead of Young Fuel
+    add('Krill One', 75, 'Omega-3 DHA+EPA and astaxanthin provide anti-aging support while addressing clinical conditions simultaneously.');
+    add('Ashwa One+ (KSM-66)', 65, 'Adaptogenic anti-aging support compatible with existing clinical supplementation.');
   }
 
   // Row 2 - Mental & Nervous System
@@ -609,13 +619,18 @@ function selectSupplements(pd){
     }
   }
 
-  // Young Fuel trigger - metabolic age (only when age 50+ or significant metabolic aging)
-  // Do NOT prioritise over clinical condition supplements
-  if(age >= 50 || (metabolicAge - actualAge >= 5)){
-    add('Young Fuel', 72, 'NMN and cellular energy support to address accelerated metabolic aging and restore cellular vitality.');
-  } else if(age >= 40 || (metabolicAge - actualAge >= 3)){
-    add('Young Fuel', 65, 'NAD+ support for anti-aging and cellular energy — appropriate for age and metabolic profile.');
+  // Young Fuel trigger - STRICT CRITERIA
+  // Only recommend when:
+  // 1. No severe clinical conditions (diabetes, heart, hypertension, kidney, liver, joints)
+  // 2. Age 50+ OR metabolic age significantly higher than actual
+  // 3. Anti-aging is an explicit goal
+  if(!hasSevereCondition() && (wantsAntiAging || age >= 50 || (metabolicAge - actualAge >= 5))){
+    add('Young Fuel', 72, 'NAD+ and cellular energy support — appropriate as no active clinical conditions requiring priority supplementation.');
+  } else if(!hasSevereCondition() && age >= 45){
+    add('Young Fuel', 65, 'Preventive NAD+ support for healthy aging — suitable as primary health goals are met.');
   }
+  // Note: Young Fuel is NOT recommended when client has diabetes, hypertension,
+  // joint issues, liver, heart or other clinical conditions — those products take priority
 
   // Fitness One - always add for weight/obesity/metabolic/general health (safe as 6th)
   if(wantsWeight || bmi >= 27 || has('obesity') || has('metabolic') || has('diabetes') || has('liver') || has('fatty liver')){
@@ -809,6 +824,11 @@ async function generatePlan(){
   const bmi=getVal('bmi'),bodyFat=getVal('bodyFat'),muscleMass=getVal('muscleMass'),muscleRate=getVal('muscleRate');
   const visceralFat=getVal('visceralFat'),bmr=getVal('bmr'),boneMass=getVal('boneMass'),bodyWater=getVal('bodyWater');
   const metabolicAge=getVal('metabolicAge'),activity=getVal('activity'),goal=selectedGoals.join(', ');
+  const fatMass=getVal('fatMass'),subcutFat=getVal('subcutFat'),subcutFatMass=getVal('subcutFatMass');
+  const skelMuscle=getVal('skelMuscle'),skelMuscleRatio=getVal('skelMuscleRatio');
+  const proteinRatio=getVal('proteinRatio'),proteinMass=getVal('proteinMass');
+  const leanBodyMass=getVal('leanBodyMass'),totalBodyWater=getVal('totalBodyWater');
+  const heartRate=getVal('heartRate'),standardWeight=getVal('standardWeight');
   const notes=getVal('notes'),dietitian=getVal('dietitian');
   const conditions=[
     ...Array.from(document.querySelectorAll('.condition-chip input:checked')).map(c=>c.value),
@@ -1367,14 +1387,14 @@ async function exportPDF(){
 
   <div class="section-label">Meal plan duration</div>
   <div class="conditions-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
-    <label class="condition-chip active" id="meal-1day-chip" onclick="setMealPlan('1day')">
+    <label class="condition-chip active" id="meal-1day-chip" onclick="setMealPlan(this.dataset.plan)" data-plan="1day">
       <div class="chip-icon">📋</div>
       <div>
         <span class="chip-label">1 Day Plan</span>
         <div style="font-size:11px;color:var(--teal-soft);">Quick · 4 pages</div>
       </div>
     </label>
-    <label class="condition-chip" id="meal-7day-chip" onclick="setMealPlan('7day')">
+    <label class="condition-chip" id="meal-7day-chip" onclick="setMealPlan(this.dataset.plan)" data-plan="7day">
       <div class="chip-icon">📅</div>
       <div>
         <span class="chip-label">7 Day Plan</span>
