@@ -368,6 +368,7 @@ function selectSupplements(pd){
 
   // PCOD / PCOS
   if(has('pcod')){
+    add('SBTC Juice', 100, 'Seabuckthorn + curcumin provides powerful antioxidant and anti-inflammatory support — essential for managing PCOD-related inflammation and hormonal imbalance.');
     add('Sweet 18+', 90, 'Hormonal balance, skin wellness and antioxidant support directly address PCOD symptoms.');
     add('Women One', 85, 'Women daily tonic regulates menstrual cycle and supports hormonal balance essential for PCOD management.');
     add('Ashwa One+ (KSM-66)', 85, 'KSM-66 ashwagandha reduces cortisol and supports hormonal regulation — clinically relevant for PCOD.');
@@ -764,7 +765,9 @@ async function generatePlan(){
     ...getWomensConditions()
   ];
 
-  lastPatientData={patientName,age,sex,height,weight,bmi,bodyFat,muscleMass,muscleRate,visceralFat,bmr,boneMass,bodyWater,metabolicAge,activity,goal,conditions,notes,dietitian};
+  // Clean conditions - remove duplicates and goal values
+  const cleanConditions=[...new Set(conditions.filter(c=>!selectedGoals.includes(c)))];
+  lastPatientData={patientName,age,sex,height,weight,bmi,bodyFat,muscleMass,muscleRate,visceralFat,bmr,boneMass,bodyWater,metabolicAge,activity,goal,conditions:cleanConditions,notes,dietitian};
 
   // UI setup
   const btn=document.getElementById('generateBtn');
@@ -912,17 +915,31 @@ async function exportPDF(){
     // Header
     doc.setFillColor(15,76,76);doc.rect(0,0,pageW,30,'F');
     doc.setFillColor(201,168,76);doc.rect(0,30,pageW,1.5,'F');
-    const lx=18,ly=15;
-    doc.setFillColor(26,107,107);doc.ellipse(lx,ly-7,3,7,'F');
-    doc.setFillColor(201,168,76);doc.ellipse(lx-3,ly-5,2.5,6,'F');doc.ellipse(lx+3,ly-5,2.5,6,'F');
-    doc.setFillColor(240,208,128);doc.ellipse(lx,ly-5,2,5,'F');
-    doc.setFillColor(201,168,76);doc.circle(lx,ly,2.5,'F');
-    doc.setFillColor(240,208,128);doc.circle(lx,ly,1.2,'F');
+    // Lotus mark - bigger and cleaner
+    const lx=22,ly=16;
+    // Outer petals - teal
+    doc.setFillColor(26,107,107);
+    doc.ellipse(lx,ly-10,4,9,'F');
+    doc.ellipse(lx-5,ly-8,3.5,8,'F');
+    doc.ellipse(lx+5,ly-8,3.5,8,'F');
+    doc.ellipse(lx-8,ly-5,3,6,'F');
+    doc.ellipse(lx+8,ly-5,3,6,'F');
+    // Inner petals - gold
+    doc.setFillColor(201,168,76);
+    doc.ellipse(lx,ly-7,3,7,'F');
+    doc.ellipse(lx-4,ly-6,2.5,6,'F');
+    doc.ellipse(lx+4,ly-6,2.5,6,'F');
+    // Centre
+    doc.setFillColor(201,168,76);doc.circle(lx,ly,3.5,'F');
+    doc.setFillColor(240,208,128);doc.circle(lx,ly,2,'F');
+    // Water ripple
+    doc.setDrawColor(201,168,76);doc.setLineWidth(0.5);
+    doc.line(lx-10,ly+4,lx+10,ly+4);
     doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');
-    doc.text('S A YOGA CLASSES',30,13);
+    doc.text('S A YOGA CLASSES',38,13);
     doc.setFontSize(8);doc.setFont('helvetica','normal');
-    doc.setTextColor(201,168,76);doc.text('WELLNESS · BALANCE · STRENGTH',30,20);
-    doc.setTextColor(180,210,210);doc.text('CLIENT DIET PLAN + SUPPLEMENT REPORT',30,26);
+    doc.setTextColor(201,168,76);doc.text('WELLNESS  ·  BALANCE  ·  STRENGTH',38,20);
+    doc.setTextColor(180,210,210);doc.text('CLIENT DIET PLAN + SUPPLEMENT REPORT',38,26);
     doc.text(new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),pageW-margin,20,{align:'right'});
     y=38;
 
@@ -942,7 +959,10 @@ async function exportPDF(){
     if(pd.visceralFat) rp.push('Visceral fat: '+pd.visceralFat);
     if(pd.bmr) rp.push('BMR: '+pd.bmr+' kcal');
     if(pd.metabolicAge) rp.push('Metabolic age: '+pd.metabolicAge);
-    const r3='Goal: '+(pd.goal||'-')+'   Activity: '+(pd.activity||'-')+(pd.conditions&&pd.conditions.length?'   Conditions: '+pd.conditions.join(', '):'');
+    const womensC=['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'];
+    const clinicalConds=(pd.conditions||[]).filter(c=>!['none','fat_loss','muscle_gain','recomposition','maintenance','health_optimisation','energy','immunity','antiaging'].includes(c));
+    const uniqueConds=[...new Set(clinicalConds)];
+    const r3='Goal: '+(pd.goal||'-')+'   |   Activity: '+(pd.activity||'-')+(uniqueConds.length?'   |   Conditions: '+uniqueConds.join(', '):'');
     const r4=pd.dietitian?'Prepared by: '+pd.dietitian+'   |   S A Yoga Classes':'Prepared by: S A Yoga Classes';
     doc.text(r1,margin+7,y+16,{maxWidth:contentW-12});
     if(rp.length) doc.text(rp.join('   '),margin+7,y+23,{maxWidth:contentW-12});
@@ -1070,7 +1090,7 @@ async function exportPDF(){
         doc.setTextColor(15,76,76);doc.setFontSize(9);doc.setFont('helvetica','bold');
         doc.text('Estimated Monthly Investment (MRP)',margin+7,y+5.5);
         doc.setFontSize(11);
-        doc.text('Rs.'+totalMRP.toLocaleString('en-IN'),pageW-margin,y+7.5,{align:'right'});
+        doc.text('INR '+totalMRP.toLocaleString('en-IN'),pageW-margin,y+7.5,{align:'right'});
         y+=16;
       }
 
@@ -1090,7 +1110,7 @@ async function exportPDF(){
       doc.setFillColor(245,245,245);doc.setDrawColor(180,180,180);
       doc.roundedRect(margin,y,contentW,22,2,2,'FD');
       doc.setTextColor(80,80,80);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
-      doc.text('Disclaimer | Asvikaran',margin+4,y+6);
+      doc.text('DISCLAIMER (Herbonutrigenx Products)',margin+4,y+6);
       doc.setFont('helvetica','normal');doc.setFontSize(7);
       doc.text('These products are not intended to treat, diagnose or cure any disease. Pregnant / Lactating women or Children under 18 should consult physician before use.',margin+4,y+12,{maxWidth:contentW-8});
       doc.text('Do not exceed the suggested amount. Discontinue use if any side effects occur.',margin+4,y+18,{maxWidth:contentW-8});
