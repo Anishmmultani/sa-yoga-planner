@@ -990,7 +990,9 @@ Be specific and Indian diet compatible.`;
     wakeAttempts++;
     try{
       btn.innerHTML='<div class="spinner"></div> Starting up server... ('+wakeAttempts+'/5)';
-      const wr=await fetch(backendUrl+'/health',{signal:AbortSignal.timeout(12000)});
+      const wc=new AbortController();
+      setTimeout(()=>wc.abort(),12000);
+      const wr=await fetch(backendUrl+'/health',{signal:wc.signal});
       if(wr.ok) break;
     }catch(e){ await new Promise(r=>setTimeout(r,3000)); }
   }
