@@ -895,7 +895,14 @@ async function generatePlan(){
 
   const bmi=getVal('bmi'),bodyFat=getVal('bodyFat'),muscleMass=getVal('muscleMass'),muscleRate=getVal('muscleRate');
   const visceralFat=getVal('visceralFat'),bmr=getVal('bmr'),boneMass=getVal('boneMass'),bodyWater=getVal('bodyWater');
-  const metabolicAge=getVal('metabolicAge'),activity=getVal('activity'),goal=getVal('goal');
+  const metabolicAge=getVal('metabolicAge'),activity=getVal('activity');
+  const selectedGoals=getSelectedGoals();
+  if(selectedGoals.length===0){
+    document.getElementById('goal-error').style.display='block';
+    return;
+  }
+  document.getElementById('goal-error').style.display='none';
+  const goal=selectedGoals.join(', ');
   const notes=getVal('notes'),dietitian=getVal('dietitian');
   const conditions=[
     ...Array.from(document.querySelectorAll('.condition-chip input:checked')).map(c=>c.value),
