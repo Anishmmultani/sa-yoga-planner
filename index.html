@@ -888,21 +888,26 @@ function getProductTiming(name){
 }
 
 async function generatePlan(){
+  // Basic validation
   const patientName=getVal('patientName'),age=getVal('age'),sex=getVal('sex'),height=getVal('height'),weight=getVal('weight');
-  const errorMsg=document.getElementById('errorMsg');
-  if(!patientName||!age||!sex||!height||!weight){errorMsg.style.display='block';return;}
-  errorMsg.style.display='none';
+  if(!patientName||!age||!sex||!height||!weight){
+    document.getElementById('errorMsg').style.display='block';
+    return;
+  }
+  document.getElementById('errorMsg').style.display='none';
 
-  const bmi=getVal('bmi'),bodyFat=getVal('bodyFat'),muscleMass=getVal('muscleMass'),muscleRate=getVal('muscleRate');
-  const visceralFat=getVal('visceralFat'),bmr=getVal('bmr'),boneMass=getVal('boneMass'),bodyWater=getVal('bodyWater');
-  const metabolicAge=getVal('metabolicAge'),activity=getVal('activity');
+  // Get goals
   const selectedGoals=getSelectedGoals();
   if(selectedGoals.length===0){
     document.getElementById('goal-error').style.display='block';
     return;
   }
   document.getElementById('goal-error').style.display='none';
-  const goal=selectedGoals.join(', ');
+
+  // Get all values
+  const bmi=getVal('bmi'),bodyFat=getVal('bodyFat'),muscleMass=getVal('muscleMass'),muscleRate=getVal('muscleRate');
+  const visceralFat=getVal('visceralFat'),bmr=getVal('bmr'),boneMass=getVal('boneMass'),bodyWater=getVal('bodyWater');
+  const metabolicAge=getVal('metabolicAge'),activity=getVal('activity'),goal=selectedGoals.join(', ');
   const notes=getVal('notes'),dietitian=getVal('dietitian');
   const conditions=[
     ...Array.from(document.querySelectorAll('.condition-chip input:checked')).map(c=>c.value),
@@ -911,49 +916,46 @@ async function generatePlan(){
 
   lastPatientData={patientName,age,sex,height,weight,bmi,bodyFat,muscleMass,muscleRate,visceralFat,bmr,boneMass,bodyWater,metabolicAge,activity,goal,conditions,notes,dietitian};
 
+  // UI setup
   const btn=document.getElementById('generateBtn');
   btn.disabled=true;
-  btn.innerHTML='<div class="spinner"></div> Generating plan for '+patientName+'...';
+  btn.innerHTML='<div class="spinner"></div> Generating...';
   document.getElementById('resultCard').classList.remove('visible');
   document.getElementById('suppSection').style.display='none';
 
-  // Build product catalogue string for AI
+  // Build prompt
+  const womensConditions=['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'];
+  const mainConditions=conditions.filter(c=>!womensConditions.includes(c));
+  const wConditions=conditions.filter(c=>womensConditions.includes(c));
   
-  const prompt=`You are a clinical dietitian at S A Yoga Classes. Generate a concise personalised diet plan in English. Keep each section brief — max 3-4 lines. Total response must be under 700 words.
+  const prompt='You are a clinical dietitian at S A Yoga Classes. Generate a concise personalised diet plan in English. Keep each section brief. Total under 700 words.
 
 CLIENT:
-- Name: ${patientName}, Age: ${age}y, Sex: ${sex}, Height: ${height}cm, Weight: ${weight}kg
-${bmi?`- BMI: ${bmi}`:''}${bodyFat?`, Body fat: ${bodyFat}%`:''}${muscleMass?`, Muscle mass: ${muscleMass}kg`:''}${muscleRate?`, Muscle rate: ${muscleRate}%`:''}
-${visceralFat?`- Visceral fat: ${visceralFat}`:''}${bmr?`, BMR: ${bmr} kcal`:''}${boneMass?`, Bone: ${boneMass}kg`:''}${bodyWater?`, Body water: ${bodyWater}%`:''}${metabolicAge?`, Metabolic age: ${metabolicAge}`:''}
-- Activity: ${activity}, Goal: ${goal}
-- Conditions: ${conditions.filter(c=>!['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'].includes(c)).join(', ')||'none'}
-${conditions.some(c=>['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'].includes(c)) ? "- Women's health: "+conditions.filter(c=>['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'].includes(c)).join(', ') : ''}
-${notes?`- Notes: ${notes}`:''}
+- Name: '+patientName+', Age: '+age+'y, Sex: '+sex+', Height: '+height+'cm, Weight: '+weight+'kg
+'+(bmi?'- BMI: '+bmi:'')+(bodyFat?', Body fat: '+bodyFat+'%':'')+(muscleMass?', Muscle: '+muscleMass+'kg':'')+'
+'+(visceralFat?'- Visceral fat: '+visceralFat:'')+(bmr?', BMR: '+bmr+' kcal':'')+(metabolicAge?', Metabolic age: '+metabolicAge:'')+'
+- Activity: '+activity+'
+- Goal: '+goal+'
+- Conditions: '+(mainConditions.length?mainConditions.join(', '):'none')+'
+'+(wConditions.length?'- Womens health: '+wConditions.join(', '):'')+'
+'+(notes?'- Notes: '+notes:'')+'
 
-Structure your response EXACTLY like this:
+Structure response EXACTLY:
 
 DIET_PLAN_START
 1. CLINICAL ASSESSMENT
-(3-4 lines — key findings only)
-
 2. CALORIE TARGET
-(BMR x activity factor = TDEE, recommended intake, one line reason)
-
 3. MACRO TARGETS
-- Protein: Xg/day — reason
-- Carbs: Xg/day — reason
-- Fat: Xg/day — reason
-
+- Protein: Xg/day
+- Carbs: Xg/day
+- Fat: Xg/day
 4. CLINICAL ADJUSTMENTS & REASONING
-(One line per condition maximum)
-
-5. SAMPLE MEAL PLAN — 1 DAY
-Breakfast: [food + portion]
-Mid-morning: [food + portion]
-Lunch: [food + portion]
-Evening snack: [food + portion]
-Dinner: [food + portion]
-
+5. SAMPLE MEAL PLAN - 1 DAY
+Breakfast: [food]
+Mid-morning: [food]
+Lunch: [food]
+Evening: [food]
+Dinner: [food]
 6. FOODS TO PRIORITISE
 - [food and why]
 - [food and why]
@@ -963,462 +965,60 @@ Dinner: [food + portion]
 - [food and why]
 - [food and why]
 - [food and why]
-
-7. FOODS TO LIMIT OR AVOID
+7. FOODS TO LIMIT
 - [food and why]
 - [food and why]
 - [food and why]
 - [food and why]
 - [food and why]
-
 8. WEEKLY MONITORING
-- [metric 1]
-- [metric 2]
-- [metric 3]
-- [metric 4]
+- [metric]
+- [metric]
+- [metric]
+- [metric]
 DIET_PLAN_END
 
-Be specific and Indian diet compatible.`;
+Indian diet compatible.';
 
-  // Wake up server then generate
-  const backendUrl='https://sa-yoga-backend.onrender.com';
-  btn.innerHTML='<div class="spinner"></div> Connecting to server...';
-  
-  // Ping to wake up Render free tier
-  let wakeAttempts=0;
-  while(wakeAttempts<5){
-    wakeAttempts++;
-    try{
-      btn.innerHTML='<div class="spinner"></div> Starting up server... ('+wakeAttempts+'/5)';
-      const wc=new AbortController();
-      setTimeout(()=>wc.abort(),12000);
-      const wr=await fetch(backendUrl+'/health',{signal:wc.signal});
-      if(wr.ok) break;
-    }catch(e){ await new Promise(r=>setTimeout(r,3000)); }
-  }
-  
-  btn.innerHTML='<div class="spinner"></div> Generating plan for '+patientName+'...';
-  
-  let fullText='';
-  let attempts=0;
-  const maxAttempts=3;
-  
-  while(attempts<maxAttempts){
-    attempts++;
-    try{
-      const controller=new AbortController();
-      const tid=setTimeout(()=>controller.abort(),90000);
-      const resp=await fetch(backendUrl+'/generate',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({prompt}),
-        signal:controller.signal
-      });
-      clearTimeout(tid);
-      const d=await resp.json();
-      fullText=d.text||'';
-      if(fullText) break;
-      if(attempts<maxAttempts) await new Promise(r=>setTimeout(r,2000));
-    }catch(e){
-      console.error('Attempt '+attempts+' failed:',e.message);
-      if(attempts<maxAttempts){
-        btn.innerHTML='<div class="spinner"></div> Retrying... ('+attempts+'/'+maxAttempts+')';
-        await new Promise(r=>setTimeout(r,3000));
-      }
-    }
-  }
-  if(!fullText) fullText='No response.';
+  console.log('Prompt length:', prompt.length);
+  console.log('Sending to backend...');
 
   try{
-  // Split plan and supplements
-    // Extract diet plan - clean all markers
+    btn.innerHTML='<div class="spinner"></div> Connecting...';
+    const response = await fetch('https://sa-yoga-backend.onrender.com/generate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt:prompt})
+    });
+    console.log('Response status:', response.status);
+    const data = await response.json();
+    console.log('Data received, text length:', data.text ? data.text.length : 0);
+    const fullText = data.text || 'No response.';
+
+    // Process result
     let cleanText = fullText
       .replace(/DIET_PLAN_START|DIET_PLAN_END|SUPPLEMENTS_START|SUPPLEMENTS_END/g,'')
       .replace(/PRODUCT:[\s\S]*$/,'')
+      .replace(/\*\*/g,'')
       .trim();
     lastPlanText = cleanText;
 
-    // Rule-based supplement selection from catalogue
+    // Rule-based supplements
     lastSupplements = selectSupplements(lastPatientData);
-    console.log('Plan length:', lastPlanText.length, 'Supplements selected:', lastSupplements.length);
+    console.log('Supplements selected:', lastSupplements.length);
 
     document.getElementById('resultTitle').textContent='Diet Plan — '+patientName;
-    // Clean up any remaining markers from display
-    const cleanPlan = lastPlanText
-      .replace(/DIET_PLAN_START|DIET_PLAN_END|SUPPLEMENTS_START|SUPPLEMENTS_END/g,'')
-      .replace(/^#+\s/gm,'')
-      .replace(/\*\*/g,'')
-      .trim();
-    lastPlanText = cleanPlan;
-    document.getElementById('resultContent').textContent=cleanPlan;
+    document.getElementById('resultContent').textContent=cleanText;
     renderSupplements();
     document.getElementById('resultCard').classList.add('visible');
     document.getElementById('resultCard').scrollIntoView({behavior:'smooth'});
   }catch(e){
-    document.getElementById('resultContent').textContent='Server took too long to respond. Please click Generate again — it should work now that the server is awake.';
+    console.error('Generate error:', e.message);
+    document.getElementById('resultContent').textContent='Error: '+e.message+'. Please try again.';
     document.getElementById('resultCard').classList.add('visible');
   }
+
   btn.disabled=false;
   btn.innerHTML='✦ Generate diet plan + supplement recommendations';
 }
 
-function parseSupplements(text){
-  const supplements=[];
-  // Clean up markdown symbols first
-  const cleaned = text.replace(/\*\*/g,'').replace(/^#+\s/gm,'');
-  const blocks=cleaned.split(/PRODUCT:/i).slice(1);
-  blocks.forEach(block=>{
-    const nameMatch=block.match(/^\s*([^\n]+)/);
-    const dosageMatch=block.match(/DOSAGE:\s*([^\n]+)/i);
-    const timingMatch=block.match(/TIMING:\s*([^\n]+)/i);
-    const reasonMatch=block.match(/REASON:\s*([^\n]+(?:\n(?!PRODUCT:|DOSAGE:|TIMING:|REASON:)[^\n]+)*)/i);
-    if(nameMatch){
-      const name=(nameMatch[1]||'').trim().replace(/^[\d\.\s]+/,'').replace(/\*\*/g,'');
-      if(name.length > 1){
-        supplements.push({
-          name:name,
-          dosage:(dosageMatch?dosageMatch[1]:'').trim().replace(/\*\*/g,''),
-          timing:(timingMatch?timingMatch[1]:'').trim().replace(/\*\*/g,''),
-          reason:(reasonMatch?reasonMatch[1]:'').trim().replace(/\n/g,' ').replace(/\*\*/g,'')
-        });
-      }
-    }
-  });
-  console.log('Parsed supplements:', supplements.length);
-  return supplements.slice(0,5);
-}
-
-function renderSupplements(){
-  const section=document.getElementById('suppSection');
-  const list=document.getElementById('suppList');
-  if(!lastSupplements||lastSupplements.length===0){section.style.display='none';return;}
-  list.innerHTML='';
-  let totalMRP = 0;
-  lastSupplements.forEach(s=>{
-    if(s.mrp) totalMRP += s.mrp;
-    const item=document.createElement('div');
-    item.className='supp-item';
-    item.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;">
-      <div class="supp-name">💊 ${s.name}</div>
-      ${s.mrp ? `<div style="font-size:12px;font-weight:700;color:var(--teal);background:var(--teal-light);padding:2px 10px;border-radius:20px;">₹${s.mrp} MRP</div>` : ''}
-    </div>
-    <div class="supp-detail"><strong>Dosage:</strong> ${s.dosage} &nbsp;|&nbsp; <strong>Timing:</strong> ${s.timing}</div>
-    <div class="supp-detail"><strong>Why:</strong> ${s.reason}</div>`;
-    list.appendChild(item);
-  });
-  // Show total MRP
-  const totalBox = document.getElementById('totalMRPBox');
-  const totalAmt = document.getElementById('totalMRPAmount');
-  if(totalMRP > 0 && totalBox && totalAmt){
-    totalBox.style.display='flex';
-    totalAmt.textContent = '₹' + totalMRP.toLocaleString('en-IN');
-  }
-  section.style.display='block';
-}
-
-function resetForm(){
-  document.querySelectorAll('input[type="text"],input[type="number"],textarea').forEach(el=>el.value='');
-  document.querySelectorAll('select').forEach(el=>el.selectedIndex=0);
-  document.getElementById('activity').value='moderate';
-  document.querySelectorAll('.condition-chip input, input[name="goal"], #womens-health-sub input').forEach(cb=>{cb.checked=false;cb.closest('.condition-chip').classList.remove('active');});
-  document.getElementById('goal-error').style.display='none';
-  document.getElementById('womens-health-sub').style.display='none';
-  document.getElementById('womens-arrow').textContent='▼';
-  document.getElementById('womens-health-chip').classList.remove('active');
-  document.querySelectorAll('[id^="flag-"]').forEach(el=>el.innerHTML='');
-  document.getElementById('resultCard').classList.remove('visible');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-async function exportPDF(){
-  if(!lastPlanText) return;
-  const pdfBtn=document.getElementById('pdfBtn');
-  pdfBtn.disabled=true;pdfBtn.innerHTML='⏳ Building PDF...';
-  try{
-    const{jsPDF}=window.jspdf;
-    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const pageW=doc.internal.pageSize.getWidth();
-    const pageH=doc.internal.pageSize.getHeight();
-    const margin=20;const contentW=pageW-margin*2-4;let y=0;
-    const checkY=(needed)=>{if(y+needed>pageH-20){doc.addPage();y=22;}};
-
-    // Header
-    doc.setFillColor(15,76,76);doc.rect(0,0,pageW,30,'F');
-    doc.setFillColor(201,168,76);doc.rect(0,30,pageW,1.5,'F');
-    const lx=18,ly=15;
-    doc.setFillColor(26,107,107);doc.ellipse(lx,ly-7,3,7,'F');
-    doc.setFillColor(201,168,76);doc.ellipse(lx-3,ly-5,2.5,6,'F');doc.ellipse(lx+3,ly-5,2.5,6,'F');
-    doc.setFillColor(240,208,128);doc.ellipse(lx,ly-5,2,5,'F');
-    doc.setFillColor(201,168,76);doc.circle(lx,ly,2.5,'F');
-    doc.setFillColor(240,208,128);doc.circle(lx,ly,1.2,'F');
-    doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');
-    doc.text('S A YOGA CLASSES',30,13);
-    doc.setFontSize(8);doc.setFont('helvetica','normal');
-    doc.setTextColor(201,168,76);doc.text('WELLNESS  ·  BALANCE  ·  STRENGTH',30,20);
-    doc.setTextColor(180,210,210);doc.text('CLIENT DIET PLAN + SUPPLEMENT REPORT',30,26);
-    doc.text(new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),pageW-margin,20,{align:'right'});
-    y=38;
-
-    // Patient card
-    const pd=lastPatientData;
-    doc.setFillColor(232,244,244);doc.setDrawColor(90,154,154);
-    doc.roundedRect(margin,y,contentW,44,3,3,'FD');
-    doc.setFillColor(15,76,76);doc.roundedRect(margin,y,3,44,1,1,'F');
-    doc.setTextColor(15,76,76);doc.setFontSize(11);doc.setFont('helvetica','bold');
-    doc.text(pd.patientName||'Client',margin+7,y+8);
-    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(74,104,101);
-    const r1=`Age: ${pd.age}y   Sex: ${pd.sex}   Height: ${pd.height}cm   Weight: ${pd.weight}kg${pd.bmi?'   BMI: '+pd.bmi:''}`;
-    const rp=[];
-    if(pd.bodyFat) rp.push('Body fat: '+pd.bodyFat+'%');
-    if(pd.muscleMass) rp.push('Muscle mass: '+pd.muscleMass+'kg');
-    if(pd.muscleRate) rp.push('Muscle rate: '+pd.muscleRate+'%');
-    if(pd.visceralFat) rp.push('Visceral fat: '+pd.visceralFat);
-    if(pd.bmr) rp.push('BMR: '+pd.bmr+' kcal');
-    if(pd.boneMass) rp.push('Bone: '+pd.boneMass+'kg');
-    if(pd.bodyWater) rp.push('Body water: '+pd.bodyWater+'%');
-    if(pd.metabolicAge) rp.push('Metabolic age: '+pd.metabolicAge);
-    const r3=`Goal: ${pd.goal}   Activity: ${pd.activity}${pd.conditions&&pd.conditions.length?'   Conditions: '+pd.conditions.join(', '):''}`;
-    const r4=pd.dietitian?`Prepared by: ${pd.dietitian}   |   S A Yoga Classes`:'Prepared by: S A Yoga Classes';
-    doc.text(r1,margin+7,y+16,{maxWidth:contentW-12});
-    if(rp.length) doc.text(rp.join('   '),margin+7,y+23,{maxWidth:contentW-12});
-    doc.text(r3,margin+7,y+30,{maxWidth:contentW-12});
-    doc.setTextColor(201,168,76);doc.text(r4,margin+7,y+38,{maxWidth:contentW-12});
-    y+=52;
-
-    // Reference ranges table
-    checkY(65);
-    doc.setFillColor(15,76,76);doc.roundedRect(margin,y,contentW,8,2,2,'F');
-    doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
-    doc.text('BIA Reference Ranges',margin+4,y+5.5);
-    doc.setTextColor(201,168,76);doc.setFontSize(7.5);
-    doc.text('Standard clinical ranges — male vs female',margin+58,y+5.5);
-    y+=10;
-    const cols=[52,20,24,20,20,24,20];
-    const headers=['Parameter','M Low','M Normal','M High','F Low','F Normal','F High'];
-    const rows=[
-      ['BMI','<18.5','18.5–24.9','25+','<18.5','18.5–24.9','25+'],
-      ['Body fat %','<8%','8–19%','>25%','<21%','21–33%','>39%'],
-      ['Muscle mass (kg)','<29','29–44','>44','<20','20–31','>31'],
-      ['Muscle rate %','<40%','40–50%','>55%','<30%','30–40%','>45%'],
-      ['Visceral fat','1–9 Normal','—','10+ High','1–9 Normal','—','10+ High'],
-      ['Bone mass (kg)','<2.5','2.5–3.5','>3.5','<1.8','1.8–2.8','>2.8'],
-      ['Body water %','<50%','50–65%','>70%','<45%','45–60%','>65%'],
-      ['BMR (kcal/day)','<1500','1500–2000','>2200','<1200','1200–1600','>1800'],
-    ];
-    doc.setFillColor(26,107,107);doc.rect(margin,y,contentW,7,'F');
-    doc.setTextColor(255,255,255);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
-    let cx=margin;
-    headers.forEach((h,i)=>{doc.text(h,cx+1,y+5);cx+=cols[i];});
-    y+=7;
-    rows.forEach((row,ri)=>{
-      checkY(7);
-      doc.setFillColor(ri%2===0?248:241,ri%2===0?250:245,ri%2===0?249:244);
-      doc.rect(margin,y,contentW,7,'F');
-      doc.setDrawColor(220,230,228);doc.line(margin,y+7,margin+contentW,y+7);
-      cx=margin;
-      row.forEach((cell,ci)=>{
-        if(ci===0){doc.setFont('helvetica','bold');doc.setTextColor(15,76,76);}
-        else if(ci===2||ci===5){doc.setTextColor(6,95,70);doc.setFont('helvetica','normal');}
-        else if(ci===3||ci===6){doc.setTextColor(153,27,27);doc.setFont('helvetica','normal');}
-        else{doc.setTextColor(120,83,0);doc.setFont('helvetica','normal');}
-        doc.text(cell,cx+1,y+5,{maxWidth:cols[ci]-2});
-        cx+=cols[ci];
-      });
-      y+=7;
-    });
-    // Client status row
-    const sex=pd.sex;
-    if(sex&&RANGES[sex]){
-      checkY(12);
-      doc.setFillColor(232,244,232);doc.rect(margin,y+2,contentW,9,'F');
-      doc.setTextColor(6,95,70);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
-      doc.text('Client status:',margin+2,y+8);
-      doc.setFont('helvetica','normal');
-      const sp=[];
-      if(pd.bodyFat){const r=RANGES[sex].bodyFat;const v=parseFloat(pd.bodyFat);sp.push('Body fat: '+(v<r.low?'Low':v<=r.high?'Normal':'High'));}
-      if(pd.muscleMass){const r=RANGES[sex].muscleMass;const v=parseFloat(pd.muscleMass);sp.push('Muscle mass: '+(v<r.low?'Low':v<=r.high?'Normal':'High'));}
-      if(pd.muscleRate){const r=RANGES[sex].muscleRate;const v=parseFloat(pd.muscleRate);sp.push('Muscle rate: '+(v<r.low?'Low':v<=r.high?'Normal':'High'));}
-      if(pd.visceralFat){const v=parseFloat(pd.visceralFat);sp.push('Visceral fat: '+(v<=9?'Normal':v<=14?'High':'Very High'));}
-      if(pd.boneMass){const r=RANGES[sex].boneMass;const v=parseFloat(pd.boneMass);sp.push('Bone mass: '+(v<r.low?'Low':v<=r.high?'Normal':'High'));}
-      if(sp.length) doc.text(sp.join('   '),margin+28,y+8,{maxWidth:contentW-30});
-      y+=14;
-    }else{y+=4;}
-    y+=6;
-
-    // Diet plan content
-    const lines=lastPlanText.split('\n');
-    for(const line of lines){
-      const trimmed=line.trim();
-      if(!trimmed){y+=2;continue;}
-      // Header = numbered section titles in ALL CAPS, or full ALL CAPS lines
-        const isHeader=((/^[1-8]\.\s+[A-Z]/.test(trimmed)) && trimmed===trimmed.toUpperCase()) 
-          || /^[A-Z][A-Z\s&\-—:]{8,}$/.test(trimmed)
-          || /^DIET_PLAN|^SUPPLEMENTS/.test(trimmed);
-      const isBullet=/^[-•*]\s/.test(trimmed)||/^\d+[.):]\s/.test(trimmed);
-      if(isHeader){
-        checkY(16);y+=5;
-        // Gold header bar with white text for clear section differentiation
-        doc.setFillColor(201,168,76);
-        doc.setDrawColor(139,110,30);
-        const wl=doc.splitTextToSize(trimmed,contentW-14);
-        const bh=wl.length*6+8;
-        doc.roundedRect(margin,y,contentW,bh,2,2,'FD');
-        // Dark teal left accent
-        doc.setFillColor(15,76,76);
-        doc.roundedRect(margin,y,4,bh,1,1,'F');
-        // White text on gold
-        doc.setTextColor(255,255,255);
-        doc.setFontSize(9.5);
-        doc.setFont('helvetica','bold');
-        wl.forEach((w,i)=>doc.text(w,margin+8,y+6+i*6));
-        y+=bh+5;
-        doc.setTextColor(30,52,50);doc.setFontSize(8);doc.setFont('helvetica','normal');
-      }else if(isBullet){
-        const bt=trimmed.replace(/^[-•*]\s*/,'').replace(/^\d+[.):,]\s*/,'');
-        const wl=doc.splitTextToSize(bt,contentW-9);
-        checkY(wl.length*5+3);
-        doc.setFillColor(15,76,76);doc.circle(margin+2.2,y+2,1,'F');
-        doc.setTextColor(51,65,65);doc.setFontSize(8);doc.setFont('helvetica','normal');
-        wl.forEach((w,i)=>doc.text(w,margin+6,y+3+i*4.5));
-        y+=wl.length*4.5+2;
-      }else{
-        const isNumbered = /^\d+\.\s/.test(trimmed);
-        if(isNumbered){
-          // Numbered items - teal dot + text, no box
-          const bt=trimmed.replace(/^\d+\.\s*/,'');
-          const wl=doc.splitTextToSize(bt, contentW-8);
-          checkY(wl.length*4.5+3);
-          doc.setFillColor(15,76,76);
-          doc.circle(margin+2,y+2.5,1.2,'F');
-          doc.setTextColor(51,65,65);doc.setFontSize(8.5);doc.setFont('helvetica','normal');
-          wl.forEach((w,i)=>doc.text(w,margin+6,y+3.5+i*4.5,{maxWidth:contentW-8}));
-          y+=wl.length*4.5+3;
-        } else {
-          doc.setTextColor(51,65,65);doc.setFontSize(8.5);doc.setFont('helvetica','normal');
-          const wl=doc.splitTextToSize(trimmed,contentW);
-          checkY(wl.length*4.5+2);
-          wl.forEach(w=>{doc.text(w,margin,y+4,{maxWidth:contentW});y+=4.5;});
-        }
-      }
-    }
-
-    // Supplement section - ALWAYS start on a new page
-    if(lastSupplements&&lastSupplements.length>0){
-      doc.addPage();
-      y=22;
-      // Full width gold header for supplement page
-      doc.setFillColor(15,76,76);
-      doc.rect(0,0,pageW,18,'F');
-      doc.setFillColor(201,168,76);
-      doc.rect(0,18,pageW,2,'F');
-      doc.setTextColor(255,255,255);
-      doc.setFontSize(13);
-      doc.setFont('helvetica','bold');
-      doc.text('Recommended Supplements',margin,13);
-      doc.setFontSize(8);
-      doc.setFont('helvetica','normal');
-      doc.setTextColor(201,168,76);
-      doc.text('Herbonutrigenx — Personalised for '+pd.patientName,margin,20,{align:'left'});
-      doc.setTextColor(201,168,76);
-      doc.text('Products selected based on your clinical profile',pageW-margin,13,{align:'right'});
-      y=28;
-      lastSupplements.forEach((s,i)=>{
-        // Calculate dynamic card height
-        const nameText = `${i+1}. ${s.name}${s.mrp ? '  —  MRP: ₹'+s.mrp : ''}`;
-        const dosageText = s.dosage ? `How to take: ${s.dosage}   |   When: ${s.timing}` : '';
-        const reasonText = s.reason ? `Why: ${s.reason}` : '';
-        
-        const nameLines = doc.splitTextToSize(nameText, contentW-14);
-        const dosageLines = dosageText ? doc.splitTextToSize(dosageText, contentW-14) : [];
-        const reasonLines = reasonText ? doc.splitTextToSize(reasonText, contentW-14) : [];
-        
-        const totalH = (nameLines.length * 5) + (dosageLines.length * 4.5) + (reasonLines.length * 4.5) + 14;
-        checkY(totalH);
-        
-        doc.setFillColor(251,244,224);doc.setDrawColor(201,168,76);
-        doc.roundedRect(margin,y,contentW,totalH,2,2,'FD');
-        doc.setFillColor(201,168,76);doc.roundedRect(margin,y,3,totalH,1,1,'F');
-        
-        let cardY = y + 6;
-        doc.setTextColor(15,76,76);doc.setFontSize(9);doc.setFont('helvetica','bold');
-        nameLines.forEach(l => { doc.text(l, margin+7, cardY); cardY += 5; });
-        
-        doc.setFont('helvetica','normal');doc.setTextColor(74,104,101);doc.setFontSize(8);
-        if(dosageLines.length){
-          cardY += 1;
-          dosageLines.forEach(l => { doc.text(l, margin+7, cardY); cardY += 4.5; });
-        }
-        if(reasonLines.length){
-          cardY += 1;
-          reasonLines.forEach(l => { doc.text(l, margin+7, cardY); cardY += 4.5; });
-        }
-        y += totalH + 4;
-      });
-      // Total MRP box in PDF
-      const totalPDFMRP = lastSupplements.reduce((sum, s) => sum + (s.mrp || 0), 0);
-      if(totalPDFMRP > 0){
-        checkY(16);
-        doc.setFillColor(232,244,244);doc.setDrawColor(15,76,76);
-        doc.roundedRect(margin,y,contentW,12,2,2,'FD');
-        doc.setFillColor(15,76,76);doc.roundedRect(margin,y,3,12,1,1,'F');
-        doc.setTextColor(15,76,76);doc.setFontSize(9);doc.setFont('helvetica','bold');
-        doc.text('Estimated Monthly Investment (MRP)',margin+7,y+5.5);
-        doc.setFontSize(11);
-        doc.text('₹'+totalPDFMRP.toLocaleString('en-IN'),pageW-margin,y+7.5,{align:'right'});
-        doc.setFontSize(7.5);doc.setFont('helvetica','italic');doc.setTextColor(90,154,154);
-        doc.text('MRP prices as per May 2026 price list. PCP/member pricing available.',margin+7,y+10);
-        y+=16;
-      }
-
-      // Allopathy warning box
-      checkY(20);
-      doc.setFillColor(255,243,205);doc.setDrawColor(201,168,76);
-      doc.roundedRect(margin,y,contentW,16,2,2,'FD');
-      doc.setFillColor(201,168,76);doc.roundedRect(margin,y,3,16,1,1,'F');
-      doc.setTextColor(120,80,0);doc.setFontSize(8);doc.setFont('helvetica','bold');
-      doc.text('Important — Allopathy Medicine Gap:',margin+7,y+6);
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);
-      doc.text('If you are on any prescription or allopathy medicines, maintain a minimum gap of 90 minutes to 2 hours between',margin+7,y+11,{maxWidth:contentW-10});
-      doc.text('your allopathy medicine and these supplements to ensure safe absorption and avoid any interactions.',margin+7,y+15.5,{maxWidth:contentW-10});
-      y+=20;
-      checkY(12);
-      // Official bilingual disclaimer box
-      checkY(28);
-      doc.setFillColor(245,245,245);doc.setDrawColor(180,180,180);
-      doc.roundedRect(margin,y,contentW,26,2,2,'FD');
-      doc.setTextColor(80,80,80);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
-      doc.text('Disclaimer | अस्वीकरण',margin+4,y+6);
-      doc.setFont('helvetica','normal');doc.setFontSize(7);
-      const line1='These products are not intended to treat, diagnose or cure any disease. Pregnant / Lactating women or Children under 18 years of age should consult physician before use.';
-      const line2='Do not exceed the suggested amount. Discontinue use if any side effect occurs.';
-      const line3='इन उत्पादों का उद्देश्य किसी बीमारी का इलाज, निदान या इलाज नहीं करना है। गर्भवती / स्तनपान कराने वाली महिलाओं या 18 वर्ष से कम उम्र के बच्चों को उपयोग करने से पहले चिकित्सक से परामर्श लेना चाहिए।';
-      const line1w=doc.splitTextToSize(line1,contentW-8);
-      const line2w=doc.splitTextToSize(line2,contentW-8);
-      line1w.forEach((l,i)=>doc.text(l,margin+4,y+11+i*4));
-      line2w.forEach((l,i)=>doc.text(l,margin+4,y+11+line1w.length*4+i*4));
-      doc.setTextColor(100,100,100);
-      doc.text('Do not exceed suggested amount. Discontinue if side effects occur.',margin+4,y+22,{maxWidth:contentW-8});
-      y+=30;
-    }
-
-    // Footer
-    const totalPages=doc.internal.getNumberOfPages();
-    for(let i=1;i<=totalPages;i++){
-      doc.setPage(i);
-      doc.setFillColor(15,76,76);doc.rect(0,pageH-14,pageW,14,'F');
-      doc.setFillColor(201,168,76);doc.rect(0,pageH-14,pageW,1,'F');
-      doc.setTextColor(180,210,210);doc.setFontSize(7);doc.setFont('helvetica','italic');
-      doc.text('Disclaimer: These products are not intended to treat, diagnose or cure any disease. Pregnant/Lactating women or children under 18 consult physician before use.',margin,pageH-6,{maxWidth:pageW-margin*2-20});
-      doc.setFont('helvetica','normal');doc.setTextColor(201,168,76);
-      doc.text(`Page ${i} of ${totalPages}`,pageW-margin,pageH-6,{align:'right'});
-    }
-
-    const safeName=(pd.patientName||'client').toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
-    doc.save(`SA_Yoga_Plan_${safeName}_${new Date().toISOString().slice(0,10)}.pdf`);
-  }catch(err){alert('PDF error: '+err.message);}
-  pdfBtn.disabled=false;
-  pdfBtn.innerHTML='⬇ Download PDF Report';
-}
-</script>
-</body>
-</html>
