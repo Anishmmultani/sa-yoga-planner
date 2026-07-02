@@ -146,16 +146,45 @@ const PRODUCTS = [
 ];
 
 const RANGES = {
-  male:{bodyFat:{low:8,high:25,label:'Normal: 8–19%'},muscleMass:{low:29,high:44,label:'Normal: 29–44 kg'},muscleRate:{low:40,high:55,label:'Normal: 40–50%'},visceralFat:{low:1,high:9,label:'Normal: 1–9'},boneMass:{low:2.5,high:3.5,label:'Normal: 2.5–3.5 kg'},bodyWater:{low:50,high:70,label:'Normal: 50–65%'},bmi:{low:18.5,high:24.9,label:'Normal: 18.5–24.9'}},
-  female:{bodyFat:{low:21,high:39,label:'Normal: 21–33%'},muscleMass:{low:20,high:31,label:'Normal: 20–31 kg'},muscleRate:{low:30,high:45,label:'Normal: 30–40%'},visceralFat:{low:1,high:9,label:'Normal: 1–9'},boneMass:{low:1.8,high:2.8,label:'Normal: 1.8–2.8 kg'},bodyWater:{low:45,high:65,label:'Normal: 45–60%'},bmi:{low:18.5,high:24.9,label:'Normal: 18.5–24.9'}}
+  male:{
+    bodyFat:{low:8,high:25,label:'Normal: 8–19%'},
+    muscleMass:{low:29,high:44,label:'Normal: 29–44 kg'},
+    muscleRate:{low:40,high:55,label:'Normal: 40–50%'},
+    visceralFat:{low:1,high:9,label:'Normal: 1–9'},
+    boneMass:{low:2.5,high:3.5,label:'Normal: 2.5–3.5 kg'},
+    bodyWater:{low:50,high:70,label:'Normal: 50–65%'},
+    bmi:{low:18.5,high:24.9,label:'Normal: 18.5–24.9'},
+    subcutFat:{low:8,high:22,label:'Normal: 8–22%'},
+    skelMuscle:{low:24,high:38,label:'Normal: 24–38 kg'},
+    skelMuscleRatio:{low:33,high:48,label:'Normal: 33–48%'},
+    proteinRatio:{low:15,high:20,label:'Normal: 15–20%'},
+    totalBodyWater:{low:33,high:50,label:'Normal: 33–50 L'},
+    heartRate:{low:60,high:100,label:'Normal: 60–100 bpm'},
+  },
+  female:{
+    bodyFat:{low:21,high:39,label:'Normal: 21–33%'},
+    muscleMass:{low:20,high:31,label:'Normal: 20–31 kg'},
+    muscleRate:{low:30,high:45,label:'Normal: 30–40%'},
+    visceralFat:{low:1,high:9,label:'Normal: 1–9'},
+    boneMass:{low:1.8,high:2.8,label:'Normal: 1.8–2.8 kg'},
+    bodyWater:{low:45,high:65,label:'Normal: 45–60%'},
+    bmi:{low:18.5,high:24.9,label:'Normal: 18.5–24.9'},
+    subcutFat:{low:18,high:35,label:'Normal: 18–35%'},
+    skelMuscle:{low:18,high:28,label:'Normal: 18–28 kg'},
+    skelMuscleRatio:{low:28,high:40,label:'Normal: 28–40%'},
+    proteinRatio:{low:14,high:19,label:'Normal: 14–19%'},
+    totalBodyWater:{low:25,high:40,label:'Normal: 25–40 L'},
+    heartRate:{low:60,high:100,label:'Normal: 60–100 bpm'},
+  }
 };
 
 function updateRanges(){
   const sex=document.getElementById('sex').value;
-  ['bodyFat','muscleMass','muscleRate','boneMass','bodyWater'].forEach(f=>{
+  ['bodyFat','muscleMass','muscleRate','boneMass','bodyWater','subcutFat','skelMuscle','skelMuscleRatio','proteinRatio','totalBodyWater','heartRate'].forEach(f=>{
     const el=document.getElementById('ref-'+f);
-    if(el) el.textContent=sex&&RANGES[sex]?RANGES[sex][f].label:'Select sex to see range';
-    const v=document.getElementById(f)?document.getElementById(f).value:'';
+    if(el) el.textContent=sex&&RANGES[sex]&&RANGES[sex][f]?RANGES[sex][f].label:'Select sex to see range';
+    const inp=document.getElementById(f);
+    const v=inp?inp.value:'';
     if(v) flagRange(f,v);
   });
   const bmrRef=document.getElementById('ref-bmr');
@@ -776,7 +805,11 @@ async function generatePlan(){
 
   // Clean conditions - remove duplicates and goal values
   const cleanConditions=[...new Set(conditions.filter(c=>!selectedGoals.includes(c)))];
-  lastPatientData={patientName,age,sex,height,weight,bmi,bodyFat,muscleMass,muscleRate,visceralFat,bmr,boneMass,bodyWater,metabolicAge,activity,goal,conditions:cleanConditions,notes,dietitian,mealPlan:mealPlanDuration};
+  lastPatientData={patientName,age,sex,height,weight,bmi,bodyFat,fatMass,muscleMass,muscleRate,
+    skelMuscle,skelMuscleRatio,proteinRatio,proteinMass,leanBodyMass,
+    subcutFat,subcutFatMass,visceralFat,bmr,boneMass,bodyWater,totalBodyWater,
+    heartRate,standardWeight,metabolicAge,activity,goal,
+    conditions:cleanConditions,notes,dietitian,mealPlan:mealPlanDuration};
 
   // UI setup
   const btn=document.getElementById('generateBtn');
@@ -794,9 +827,12 @@ async function generatePlan(){
     'You are a clinical dietitian at S A Yoga Classes. Generate a personalised diet plan in English. '+(mealPlanDuration==="7day"?'For the 7-day meal plan be detailed with each day. Total under 2000 words.':'Keep each section brief. Total under 700 words.'),
     '',
     'CLIENT:',
-    '- Name: '+patientName+', Age: '+age+'y, Sex: '+sex+', Height: '+height+'cm, Weight: '+weight+'kg',
-    (bmi?'- BMI: '+bmi:'')+(bodyFat?', Body fat: '+bodyFat+'%':'')+(muscleMass?', Muscle: '+muscleMass+'kg':''),
-    (visceralFat?'- Visceral fat: '+visceralFat:'')+(bmr?', BMR: '+bmr+' kcal':'')+(metabolicAge?', Metabolic age: '+metabolicAge:''),
+    '- Name: '+patientName+', Age: '+age+'y, Sex: '+sex+', Height: '+height+'cm, Weight: '+weight+'kg'+(standardWeight?', Ideal weight: '+standardWeight+'kg':''),
+    '- BMI: '+(bmi||'-')+(bodyFat?', Fat ratio: '+bodyFat+'%':'')+(fatMass?', Fat mass: '+fatMass+'kg':'')+(subcutFat?', Subcutaneous fat: '+subcutFat+'%':'')+(subcutFatMass?'/'+subcutFatMass+'kg':''),
+    (muscleMass?'- Muscle mass: '+muscleMass+'kg':'')+(muscleRate?', Muscle ratio: '+muscleRate+'%':'')+(skelMuscle?', Skeletal muscle: '+skelMuscle+'kg':'')+(skelMuscleRatio?'/'+skelMuscleRatio+'%':''),
+    (proteinRatio?'- Protein ratio: '+proteinRatio+'%':'')+(proteinMass?', Protein mass: '+proteinMass+'kg':'')+(leanBodyMass?', Lean body mass: '+leanBodyMass+'kg':''),
+    (visceralFat?'- Visceral fat: '+visceralFat:'')+(bmr?', BMR: '+bmr+' kcal':'')+(heartRate?', Heart rate: '+heartRate+' bpm':'')+(metabolicAge?', Body age: '+metabolicAge:''),
+    (bodyWater?'- Water ratio: '+bodyWater+'%':'')+(totalBodyWater?', Total body water: '+totalBodyWater+'L':'')+(boneMass?', Bone mass: '+boneMass+'kg':''),
     '- Activity: '+activity,
     '- Goal: '+goal,
     '- Conditions: '+(mainConditions.length?mainConditions.join(', '):'none'),
@@ -971,12 +1007,20 @@ async function exportPDF(){
     doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(74,104,101);
     const r1='Age: '+(pd.age||'-')+'y   Sex: '+(pd.sex||'-')+'   Height: '+(pd.height||'-')+'cm   Weight: '+(pd.weight||'-')+'kg'+(pd.bmi?'   BMI: '+pd.bmi:'');
     const rp=[];
-    if(pd.bodyFat) rp.push('Body fat: '+pd.bodyFat+'%');
+    if(pd.bodyFat) rp.push('Fat ratio: '+pd.bodyFat+'%');
+    if(pd.fatMass) rp.push('Fat mass: '+pd.fatMass+'kg');
+    if(pd.subcutFat) rp.push('Subcut fat: '+pd.subcutFat+'%');
     if(pd.muscleMass) rp.push('Muscle: '+pd.muscleMass+'kg');
-    if(pd.muscleRate) rp.push('Muscle rate: '+pd.muscleRate+'%');
+    if(pd.muscleRate) rp.push('Muscle ratio: '+pd.muscleRate+'%');
+    if(pd.skelMuscle) rp.push('Skel muscle: '+pd.skelMuscle+'kg');
+    if(pd.proteinRatio) rp.push('Protein: '+pd.proteinRatio+'%');
+    if(pd.leanBodyMass) rp.push('Lean mass: '+pd.leanBodyMass+'kg');
     if(pd.visceralFat) rp.push('Visceral fat: '+pd.visceralFat);
     if(pd.bmr) rp.push('BMR: '+pd.bmr+' kcal');
-    if(pd.metabolicAge) rp.push('Metabolic age: '+pd.metabolicAge);
+    if(pd.heartRate) rp.push('Heart rate: '+pd.heartRate+' bpm');
+    if(pd.totalBodyWater) rp.push('Body water: '+pd.totalBodyWater+'L');
+    if(pd.metabolicAge) rp.push('Body age: '+pd.metabolicAge);
+    if(pd.standardWeight) rp.push('Ideal weight: '+pd.standardWeight+'kg');
     const womensC=['menopause','pcod','leucorrhoea','vaginal_infection','pms','fertility_women'];
     const clinicalConds=(pd.conditions||[]).filter(c=>!['none','fat_loss','muscle_gain','recomposition','maintenance','health_optimisation','energy','immunity','antiaging'].includes(c));
     const uniqueConds=[...new Set(clinicalConds)];
@@ -1000,13 +1044,18 @@ async function exportPDF(){
     const headers=['Parameter','M Low','M Normal','M High','F Low','F Normal','F High'];
     const rows=[
       ['BMI','<18.5','18.5–24.9','25+','<18.5','18.5–24.9','25+'],
-      ['Body fat %','<8%','8–19%','>25%','<21%','21–33%','>39%'],
+      ['Fat ratio %','<8%','8–19%','>25%','<21%','21–33%','>39%'],
+      ['Subcutaneous fat %','<8%','8–22%','>25%','<18%','18–35%','>40%'],
       ['Muscle mass (kg)','<29','29–44','>44','<20','20–31','>31'],
-      ['Muscle rate %','<40%','40–50%','>55%','<30%','30–40%','>45%'],
+      ['Muscle ratio %','<40%','40–50%','>55%','<30%','30–40%','>45%'],
+      ['Skeletal muscle (kg)','<24','24–38','>38','<18','18–28','>28'],
+      ['Protein ratio %','<15%','15–20%','>22%','<14%','14–19%','>21%'],
       ['Visceral fat','1–9 Normal','—','10+ High','1–9 Normal','—','10+ High'],
       ['Bone mass (kg)','<2.5','2.5–3.5','>3.5','<1.8','1.8–2.8','>2.8'],
       ['Body water %','<50%','50–65%','>70%','<45%','45–60%','>65%'],
+      ['Total body water (L)','<33L','33–50L','>50L','<25L','25–40L','>40L'],
       ['BMR (kcal/day)','<1500','1500–2000','>2200','<1200','1200–1600','>1800'],
+      ['Heart rate (bpm)','<60','60–100','>100','<60','60–100','>100'],
     ];
     doc.setFillColor(26,107,107);doc.rect(margin,y,contentW,7,'F');
     doc.setTextColor(255,255,255);doc.setFontSize(7.5);doc.setFont('helvetica','bold');
@@ -1205,33 +1254,80 @@ async function exportPDF(){
   </div>
 
   <div class="section-label">BIA scale readings</div>
-  <div class="grid-3">
+  <!-- Row 1: Weight, Standard Weight, BMI, BMR -->
+  <div class="grid-4">
     <div class="field"><label>Weight (kg)</label><input type="number" id="weight" placeholder="75" step="0.1"/></div>
+    <div class="field"><label>Standard Weight (kg)</label><input type="number" id="standardWeight" placeholder="65" step="0.1"/>
+      <div class="field-hint">Machine's ideal weight</div></div>
     <div class="field"><label>BMI</label><input type="number" id="bmi" placeholder="26.5" step="0.1" oninput="flagRange('bmi',this.value)"/>
       <div id="flag-bmi"></div><div class="field-hint">Normal: 18.5–24.9</div></div>
-    <div class="field"><label>Body fat %</label><input type="number" id="bodyFat" placeholder="22" step="0.1" oninput="flagRange('bodyFat',this.value)"/>
-      <div id="flag-bodyFat"></div><div class="field-hint" id="ref-bodyFat">Select sex to see range</div></div>
-  </div>
-  <div class="grid-4" style="margin-top:12px;">
-    <div class="field"><label>Muscle mass (kg)</label><input type="number" id="muscleMass" placeholder="35" step="0.1" oninput="flagRange('muscleMass',this.value)"/>
-      <div id="flag-muscleMass"></div><div class="field-hint" id="ref-muscleMass">Select sex</div></div>
-    <div class="field"><label>Muscle rate %</label><input type="number" id="muscleRate" placeholder="46" step="0.1" oninput="flagRange('muscleRate',this.value)"/>
-      <div id="flag-muscleRate"></div><div class="field-hint" id="ref-muscleRate">Select sex</div></div>
-    <div class="field"><label>Visceral fat</label><input type="number" id="visceralFat" placeholder="8" oninput="flagRange('visceralFat',this.value)"/>
-      <div id="flag-visceralFat"></div><div class="field-hint">Normal: 1–9</div></div>
     <div class="field"><label>BMR (kcal/day)</label><input type="number" id="bmr" placeholder="1650"/>
       <div class="field-hint" id="ref-bmr">Select sex</div></div>
   </div>
-  <div class="grid-3" style="margin-top:12px;">
-    <div class="field"><label>Bone mass (kg)</label><input type="number" id="boneMass" placeholder="3.2" step="0.1" oninput="flagRange('boneMass',this.value)"/>
-      <div id="flag-boneMass"></div><div class="field-hint" id="ref-boneMass">Select sex</div></div>
-    <div class="field"><label>Body water %</label><input type="number" id="bodyWater" placeholder="55" step="0.1" oninput="flagRange('bodyWater',this.value)"/>
-      <div id="flag-bodyWater"></div><div class="field-hint" id="ref-bodyWater">Select sex</div></div>
-    <div class="field"><label>Metabolic age</label><input type="number" id="metabolicAge" placeholder="40"/>
-      <div class="field-hint">Lower than actual age = good</div></div>
+
+  <!-- Row 2: Heart Rate, Body Age -->
+  <div class="grid-4" style="margin-top:12px;">
+    <div class="field"><label>Heart Rate (bpm)</label><input type="number" id="heartRate" placeholder="72" oninput="flagRange('heartRate',this.value)"/>
+      <div id="flag-heartRate"></div><div class="field-hint">Normal: 60–100 bpm</div></div>
+    <div class="field"><label>Body Age (years)</label><input type="number" id="metabolicAge" placeholder="40"/>
+      <div class="field-hint">Lower than actual = good</div></div>
+    <div class="field"></div>
+    <div class="field"></div>
   </div>
 
-  <div class="section-label">BIA reference ranges</div>
+  <!-- Row 3: Water -->
+  <div class="grid-3" style="margin-top:12px;">
+    <div class="field"><label>Water Ratio %</label><input type="number" id="bodyWater" placeholder="55" step="0.1" oninput="flagRange('bodyWater',this.value)"/>
+      <div id="flag-bodyWater"></div><div class="field-hint" id="ref-bodyWater">Select sex</div></div>
+    <div class="field"><label>Total Body Water (L)</label><input type="number" id="totalBodyWater" placeholder="35" step="0.1" oninput="flagRange('totalBodyWater',this.value)"/>
+      <div id="flag-totalBodyWater"></div><div class="field-hint" id="ref-totalBodyWater">Select sex</div></div>
+    <div class="field"><label>Bone Mass (kg)</label><input type="number" id="boneMass" placeholder="3.2" step="0.1" oninput="flagRange('boneMass',this.value)"/>
+      <div id="flag-boneMass"></div><div class="field-hint" id="ref-boneMass">Select sex</div></div>
+  </div>
+
+  <!-- Row 4: Muscle -->
+  <div class="grid-4" style="margin-top:12px;">
+    <div class="field"><label>Muscle Mass (kg)</label><input type="number" id="muscleMass" placeholder="35" step="0.1" oninput="flagRange('muscleMass',this.value)"/>
+      <div id="flag-muscleMass"></div><div class="field-hint" id="ref-muscleMass">Select sex</div></div>
+    <div class="field"><label>Muscle Ratio %</label><input type="number" id="muscleRate" placeholder="46" step="0.1" oninput="flagRange('muscleRate',this.value)"/>
+      <div id="flag-muscleRate"></div><div class="field-hint" id="ref-muscleRate">Select sex</div></div>
+    <div class="field"><label>Skeletal Muscle (kg)</label><input type="number" id="skelMuscle" placeholder="28" step="0.1" oninput="flagRange('skelMuscle',this.value)"/>
+      <div id="flag-skelMuscle"></div><div class="field-hint" id="ref-skelMuscle">Select sex</div></div>
+    <div class="field"><label>Skeletal Muscle %</label><input type="number" id="skelMuscleRatio" placeholder="38" step="0.1" oninput="flagRange('skelMuscleRatio',this.value)"/>
+      <div id="flag-skelMuscleRatio"></div><div class="field-hint" id="ref-skelMuscleRatio">Select sex</div></div>
+  </div>
+
+  <!-- Row 5: Fat -->
+  <div class="grid-4" style="margin-top:12px;">
+    <div class="field"><label>Fat Ratio %</label><input type="number" id="bodyFat" placeholder="22" step="0.1" oninput="flagRange('bodyFat',this.value)"/>
+      <div id="flag-bodyFat"></div><div class="field-hint" id="ref-bodyFat">Select sex</div></div>
+    <div class="field"><label>Fat Mass (kg)</label><input type="number" id="fatMass" placeholder="18" step="0.1"/>
+      <div class="field-hint">Absolute fat weight</div></div>
+    <div class="field"><label>Visceral Fat</label><input type="number" id="visceralFat" placeholder="8" oninput="flagRange('visceralFat',this.value)"/>
+      <div id="flag-visceralFat"></div><div class="field-hint">Normal: 1–9</div></div>
+    <div class="field"><label>Lean Body Mass (kg)</label><input type="number" id="leanBodyMass" placeholder="52" step="0.1"/>
+      <div class="field-hint">Weight minus fat</div></div>
+  </div>
+
+  <!-- Row 6: Subcutaneous Fat -->
+  <div class="grid-3" style="margin-top:12px;">
+    <div class="field"><label>Subcutaneous Fat %</label><input type="number" id="subcutFat" placeholder="18" step="0.1" oninput="flagRange('subcutFat',this.value)"/>
+      <div id="flag-subcutFat"></div><div class="field-hint" id="ref-subcutFat">Select sex</div></div>
+    <div class="field"><label>Subcutaneous Fat (kg)</label><input type="number" id="subcutFatMass" placeholder="14" step="0.1"/>
+      <div class="field-hint">Fat under skin</div></div>
+    <div class="field"></div>
+  </div>
+
+  <!-- Row 7: Protein -->
+  <div class="grid-3" style="margin-top:12px;">
+    <div class="field"><label>Protein Ratio %</label><input type="number" id="proteinRatio" placeholder="17" step="0.1" oninput="flagRange('proteinRatio',this.value)"/>
+      <div id="flag-proteinRatio"></div><div class="field-hint" id="ref-proteinRatio">Select sex</div></div>
+    <div class="field"><label>Protein Mass (kg)</label><input type="number" id="proteinMass" placeholder="12" step="0.1"/>
+      <div class="field-hint">Normal: 15–20% of weight</div></div>
+    <div class="field"></div>
+  </div>
+
+    <div class="section-label">BIA reference ranges</div>
   <div class="ref-table-wrap">
     <table class="ref-table">
       <thead><tr>
@@ -1241,13 +1337,18 @@ async function exportPDF(){
       </tr></thead>
       <tbody>
         <tr><td>BMI</td><td colspan="6" style="text-align:center;color:var(--gray-400);">Under 18.5 | Normal 18.5–24.9 | Overweight 25–29.9 | Obese 30+ (same for all)</td></tr>
-        <tr><td>Body fat %</td><td>&lt;8%</td><td>8–19%</td><td>&gt;25%</td><td>&lt;21%</td><td>21–33%</td><td>&gt;39%</td></tr>
+        <tr><td>Fat ratio %</td><td>&lt;8%</td><td>8–19%</td><td>&gt;25%</td><td>&lt;21%</td><td>21–33%</td><td>&gt;39%</td></tr>
+        <tr><td>Subcutaneous fat %</td><td>&lt;8%</td><td>8–22%</td><td>&gt;25%</td><td>&lt;18%</td><td>18–35%</td><td>&gt;40%</td></tr>
         <tr><td>Muscle mass (kg)</td><td>&lt;29</td><td>29–44</td><td>&gt;44</td><td>&lt;20</td><td>20–31</td><td>&gt;31</td></tr>
-        <tr><td>Muscle rate %</td><td>&lt;40%</td><td>40–50%</td><td>&gt;55%</td><td>&lt;30%</td><td>30–40%</td><td>&gt;45%</td></tr>
+        <tr><td>Muscle ratio %</td><td>&lt;40%</td><td>40–50%</td><td>&gt;55%</td><td>&lt;30%</td><td>30–40%</td><td>&gt;45%</td></tr>
+        <tr><td>Skeletal muscle (kg)</td><td>&lt;24</td><td>24–38</td><td>&gt;38</td><td>&lt;18</td><td>18–28</td><td>&gt;28</td></tr>
+        <tr><td>Protein ratio %</td><td>&lt;15%</td><td>15–20%</td><td>&gt;22%</td><td>&lt;14%</td><td>14–19%</td><td>&gt;21%</td></tr>
         <tr><td>Visceral fat</td><td colspan="6" style="text-align:center;color:var(--gray-400);">1–9 Normal | 10–14 High | 15+ Very High (same for all)</td></tr>
         <tr><td>Bone mass (kg)</td><td>&lt;2.5</td><td>2.5–3.5</td><td>&gt;3.5</td><td>&lt;1.8</td><td>1.8–2.8</td><td>&gt;2.8</td></tr>
         <tr><td>Body water %</td><td>&lt;50%</td><td>50–65%</td><td>&gt;70%</td><td>&lt;45%</td><td>45–60%</td><td>&gt;65%</td></tr>
+        <tr><td>Total body water (L)</td><td>&lt;33L</td><td>33–50L</td><td>&gt;50L</td><td>&lt;25L</td><td>25–40L</td><td>&gt;40L</td></tr>
         <tr><td>BMR (kcal/day)</td><td>&lt;1500</td><td>1500–2000</td><td>&gt;2200</td><td>&lt;1200</td><td>1200–1600</td><td>&gt;1800</td></tr>
+        <tr><td>Heart rate (bpm)</td><td colspan="6" style="text-align:center;color:var(--gray-400);">Below 60 = Low | 60–100 = Normal | Above 100 = High (same for all)</td></tr>
       </tbody>
     </table>
   </div>
