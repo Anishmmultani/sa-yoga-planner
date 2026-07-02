@@ -723,7 +723,7 @@ function renderSupplements(){
     item.className='supp-item';
     item.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;">'
       +'<div class="supp-name">&#128138; '+s.name+'</div>'
-      +(s.mrp?'<div style="font-size:12px;font-weight:700;color:var(--teal);background:var(--teal-light);padding:2px 10px;border-radius:20px;">&#8377;'+s.mrp+' MRP</div>':'')
+      +(s.mrp?'<div style="font-size:12px;font-weight:700;color:var(--teal);background:var(--teal-light);padding:2px 10px;border-radius:20px;">INR '+s.mrp+' MRP</div>':'')
       +'</div>'
       +'<div class="supp-detail"><strong>Dosage:</strong> '+s.dosage+' &nbsp;|&nbsp; <strong>Timing:</strong> '+s.timing+'</div>'
       +'<div class="supp-detail"><strong>Why:</strong> '+s.reason+'</div>';
@@ -733,7 +733,7 @@ function renderSupplements(){
   const totalAmt=document.getElementById('totalMRPAmount');
   if(totalMRP>0&&totalBox&&totalAmt){
     totalBox.style.display='flex';
-    totalAmt.textContent='&#8377;'+totalMRP.toLocaleString('en-IN');
+    totalAmt.textContent='INR '+totalMRP.toLocaleString('en-IN');
   }
   section.style.display='block';
 }
@@ -915,31 +915,44 @@ async function exportPDF(){
     // Header
     doc.setFillColor(15,76,76);doc.rect(0,0,pageW,30,'F');
     doc.setFillColor(201,168,76);doc.rect(0,30,pageW,1.5,'F');
-    // Lotus mark - bigger and cleaner
-    const lx=22,ly=16;
-    // Outer petals - teal
-    doc.setFillColor(26,107,107);
-    doc.ellipse(lx,ly-10,4,9,'F');
-    doc.ellipse(lx-5,ly-8,3.5,8,'F');
-    doc.ellipse(lx+5,ly-8,3.5,8,'F');
-    doc.ellipse(lx-8,ly-5,3,6,'F');
-    doc.ellipse(lx+8,ly-5,3,6,'F');
-    // Inner petals - gold
+    // Lotus mark - proper lotus flower shape
+    const lx=20,ly=22;
+    // Back outer petals (teal) - tall narrow upright petals
+    doc.setFillColor(15,76,76);
+    // Far left petal
+    doc.ellipse(lx-9,ly-8,2,7,'F');
+    // Far right petal  
+    doc.ellipse(lx+9,ly-8,2,7,'F');
+    // Left petal
+    doc.ellipse(lx-5,ly-10,2.2,8,'F');
+    // Right petal
+    doc.ellipse(lx+5,ly-10,2.2,8,'F');
+    // Middle back petal
+    doc.ellipse(lx,ly-11,2.5,9,'F');
+    // Gold middle petals
     doc.setFillColor(201,168,76);
-    doc.ellipse(lx,ly-7,3,7,'F');
-    doc.ellipse(lx-4,ly-6,2.5,6,'F');
-    doc.ellipse(lx+4,ly-6,2.5,6,'F');
-    // Centre
-    doc.setFillColor(201,168,76);doc.circle(lx,ly,3.5,'F');
-    doc.setFillColor(240,208,128);doc.circle(lx,ly,2,'F');
-    // Water ripple
-    doc.setDrawColor(201,168,76);doc.setLineWidth(0.5);
-    doc.line(lx-10,ly+4,lx+10,ly+4);
+    // Left gold
+    doc.ellipse(lx-3,ly-9,2,8,'F');
+    // Right gold
+    doc.ellipse(lx+3,ly-9,2,8,'F');
+    // Centre gold petal (tallest)
+    doc.ellipse(lx,ly-10,2.5,9,'F');
+    // Light gold inner
+    doc.setFillColor(240,208,128);
+    doc.ellipse(lx,ly-8,1.5,6,'F');
+    // Centre circle
+    doc.setFillColor(201,168,76);doc.circle(lx,ly,3,'F');
+    doc.setFillColor(240,208,128);doc.circle(lx,ly,1.5,'F');
+    // Water line
+    doc.setDrawColor(201,168,76);doc.setLineWidth(0.8);
+    doc.line(lx-12,ly+3,lx+12,ly+3);
+    doc.setLineWidth(0.4);
+    doc.line(lx-10,ly+5,lx+10,ly+5);
     doc.setTextColor(255,255,255);doc.setFontSize(16);doc.setFont('helvetica','bold');
-    doc.text('S A YOGA CLASSES',38,13);
+    doc.text('S A YOGA CLASSES',38,10);
     doc.setFontSize(8);doc.setFont('helvetica','normal');
-    doc.setTextColor(201,168,76);doc.text('WELLNESS  ·  BALANCE  ·  STRENGTH',38,20);
-    doc.setTextColor(180,210,210);doc.text('CLIENT DIET PLAN + SUPPLEMENT REPORT',38,26);
+    doc.setTextColor(201,168,76);doc.text('WELLNESS  ·  BALANCE  ·  STRENGTH',38,18);
+    doc.setTextColor(180,210,210);doc.text('CLIENT DIET PLAN + SUPPLEMENT REPORT',38,25);
     doc.text(new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}),pageW-margin,20,{align:'right'});
     y=38;
 
@@ -1060,7 +1073,7 @@ async function exportPDF(){
       y=28;
 
       lastSupplements.forEach((s,i)=>{
-        const nameText=(i+1)+'. '+s.name+(s.mrp?'  —  MRP: ₹'+s.mrp:'');
+        const nameText=(i+1)+'. '+s.name+(s.mrp?'  —  MRP: INR '+s.mrp:'');
         const dosageText=s.dosage?'How to take: '+s.dosage+'   |   When: '+s.timing:'';
         const reasonText=s.reason?'Why: '+s.reason:'';
         const nameLines=doc.splitTextToSize(nameText,contentW-14);
@@ -1307,7 +1320,7 @@ async function exportPDF(){
     <p style="font-size:12px;font-weight:600;color:var(--teal);">Estimated monthly investment</p>
     <p style="font-size:11px;color:var(--teal-soft);">MRP total for all recommended supplements</p>
   </div>
-  <div id="totalMRPAmount" style="font-size:20px;font-weight:700;color:var(--teal);">₹0</div>
+  <div id="totalMRPAmount" style="font-size:20px;font-weight:700;color:var(--teal);">INR 0</div>
 </div>
 <div style="margin-top:10px;padding:10px 14px;background:#FFF8E1;border-left:3px solid var(--gold);border-radius:8px;">
   <p style="font-size:12px;font-weight:700;color:var(--gold-dark);margin-bottom:4px;">⚠ Important — Allopathy Medicine Gap</p>
