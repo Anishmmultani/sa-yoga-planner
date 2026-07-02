@@ -221,6 +221,14 @@ function toggleChip(checkbox){
 
 function getVal(id){const el=document.getElementById(id);return el?el.value.trim():'';}
 
+let mealPlanDuration='1day';
+
+function setMealPlan(type){
+  mealPlanDuration=type;
+  document.getElementById('meal-1day-chip').classList.toggle('active', type==='1day');
+  document.getElementById('meal-7day-chip').classList.toggle('active', type==='7day');
+}
+
 let lastPlanText='';
 let lastPatientData={};
 let lastSupplements=[];
@@ -754,6 +762,7 @@ async function generatePlan(){
     return;
   }
   document.getElementById('goal-error').style.display='none';
+  setMealPlan('1day');
 
   // Get all values
   const bmi=getVal('bmi'),bodyFat=getVal('bodyFat'),muscleMass=getVal('muscleMass'),muscleRate=getVal('muscleRate');
@@ -767,7 +776,7 @@ async function generatePlan(){
 
   // Clean conditions - remove duplicates and goal values
   const cleanConditions=[...new Set(conditions.filter(c=>!selectedGoals.includes(c)))];
-  lastPatientData={patientName,age,sex,height,weight,bmi,bodyFat,muscleMass,muscleRate,visceralFat,bmr,boneMass,bodyWater,metabolicAge,activity,goal,conditions:cleanConditions,notes,dietitian};
+  lastPatientData={patientName,age,sex,height,weight,bmi,bodyFat,muscleMass,muscleRate,visceralFat,bmr,boneMass,bodyWater,metabolicAge,activity,goal,conditions:cleanConditions,notes,dietitian,mealPlan:mealPlanDuration};
 
   // UI setup
   const btn=document.getElementById('generateBtn');
@@ -782,7 +791,7 @@ async function generatePlan(){
   const wConditions=conditions.filter(c=>womensConditions.includes(c));
   
   const prompt=[
-    'You are a clinical dietitian at S A Yoga Classes. Generate a concise personalised diet plan in English. Keep each section brief. Total under 700 words.',
+    'You are a clinical dietitian at S A Yoga Classes. Generate a personalised diet plan in English. '+(mealPlanDuration==="7day"?'For the 7-day meal plan be detailed with each day. Total under 2000 words.':'Keep each section brief. Total under 700 words.'),
     '',
     'CLIENT:',
     '- Name: '+patientName+', Age: '+age+'y, Sex: '+sex+', Height: '+height+'cm, Weight: '+weight+'kg',
@@ -804,12 +813,7 @@ async function generatePlan(){
     '- Carbs: Xg/day',
     '- Fat: Xg/day',
     '4. CLINICAL ADJUSTMENTS & REASONING',
-    '5. SAMPLE MEAL PLAN - 1 DAY',
-    'Breakfast: [food]',
-    'Mid-morning: [food]',
-    'Lunch: [food]',
-    'Evening: [food]',
-    'Dinner: [food]',
+    mealPlanDuration==='7day' ? '5. SAMPLE MEAL PLAN - 7 DAYS (Monday to Sunday)\nFor each day provide:\nBreakfast: [food + portion]\nMid-morning: [food + portion]\nLunch: [food + portion]\nEvening: [food + portion]\nDinner: [food + portion]\nVary foods each day. Keep macros consistent. Indian diet compatible. Label each day clearly as DAY 1 (MONDAY): etc.' : '5. SAMPLE MEAL PLAN - 1 DAY\nBreakfast: [food + portion]\nMid-morning: [food + portion]\nLunch: [food + portion]\nEvening: [food + portion]\nDinner: [food + portion]',
     '6. FOODS TO PRIORITISE',
     '- [food and why]',
     '- [food and why]',
@@ -887,6 +891,7 @@ function resetForm(){
     cb.closest('.condition-chip').classList.remove('active');
   });
   document.getElementById('goal-error').style.display='none';
+  setMealPlan('1day');
   const sub=document.getElementById('womens-health-sub');
   if(sub) sub.style.display='none';
   const arrow=document.getElementById('womens-arrow');
@@ -976,7 +981,7 @@ async function exportPDF(){
     const clinicalConds=(pd.conditions||[]).filter(c=>!['none','fat_loss','muscle_gain','recomposition','maintenance','health_optimisation','energy','immunity','antiaging'].includes(c));
     const uniqueConds=[...new Set(clinicalConds)];
     const r3='Goal: '+(pd.goal||'-')+'   |   Activity: '+(pd.activity||'-')+(uniqueConds.length?'   |   Conditions: '+uniqueConds.join(', '):'');
-    const r4=pd.dietitian?'Prepared by: '+pd.dietitian+'   |   S A Yoga Classes':'Prepared by: S A Yoga Classes';
+    const r4=(pd.dietitian?'Prepared by: '+pd.dietitian+'   |   ':'')+'S A Yoga Classes'+(pd.mealPlan==='7day'?'   |   7-Day Meal Plan':'   |   1-Day Meal Plan');
     doc.text(r1,margin+7,y+16,{maxWidth:contentW-12});
     if(rp.length) doc.text(rp.join('   '),margin+7,y+23,{maxWidth:contentW-12});
     doc.text(r3,margin+7,y+30,{maxWidth:contentW-12});
@@ -1245,6 +1250,24 @@ async function exportPDF(){
         <tr><td>BMR (kcal/day)</td><td>&lt;1500</td><td>1500–2000</td><td>&gt;2200</td><td>&lt;1200</td><td>1200–1600</td><td>&gt;1800</td></tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="section-label">Meal plan duration</div>
+  <div class="conditions-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
+    <label class="condition-chip active" id="meal-1day-chip" onclick="setMealPlan('1day')">
+      <div class="chip-icon">📋</div>
+      <div>
+        <span class="chip-label">1 Day Plan</span>
+        <div style="font-size:11px;color:var(--teal-soft);">Quick · 4 pages</div>
+      </div>
+    </label>
+    <label class="condition-chip" id="meal-7day-chip" onclick="setMealPlan('7day')">
+      <div class="chip-icon">📅</div>
+      <div>
+        <span class="chip-label">7 Day Plan</span>
+        <div style="font-size:11px;color:var(--teal-soft);">Full week · Mon–Sun</div>
+      </div>
+    </label>
   </div>
 
   <div class="section-label">Activity & goal</div>
