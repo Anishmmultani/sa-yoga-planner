@@ -694,6 +694,21 @@ function getProductTiming(name){
   };
   return timings[name] || 'After breakfast and after dinner (always after food)';
 }
+function getProductMRP(name){
+  const prices={
+    'Cal Mg D':419,'Sweet 18+':1327,'Carb Cut One':1869,'Ashwa One+ (KSM-66)':1402,
+    'Everyday One':1327,'Amazing 40+':1415,'Brain One':2299,'Ortho One':2149,
+    'Liver One':1415,'Heart One':2300,'Prostate One':1599,'Vitality Fuel H':3085,
+    'Vitality Fuel E':1327,'Lungs Fuel':2243,'Hair One':1869,'Diab Vital One':2212,
+    'WLB One':1869,'Krill One':2389,'Marine Collagen':2654,'Young Fuel':8199,
+    'A9-Onko':3459,'Thyro One':1699,'Flax ALA':1028,'A-One Lean':2212,
+    'Hemo 14+':1599,'AVBT Juice':1349,'SBTC Juice':1349,'Joint Flexer':849,
+    'Livo Syrup':223,'Women One':420,'Fitness One':999,'Luco-UT One':341,
+    'PIL One':1121,'Flush One':934,'Uric One':1121,'GPM Syrup':373,'Eye One':1699,
+  };
+  return prices[name]||0;
+}
+
 
 async function generatePlan(){
   // Basic validation
