@@ -291,9 +291,14 @@ function selectSupplements(pd){
   };
 
   // ── STEP 1: Always pick ONE priority juice ──
-  // AVBT wins if hypertension, heart, blood pressure, liver detox
-  if(has('hypertension') || has('heart') || has('liver')){
-    add('AVBT Juice', 100, 'Aloe vera + beetroot directly addresses blood pressure, supports cardiovascular function and liver detoxification.');
+  // AVBT wins for hypertension, heart, blood pressure, liver
+  // SBTC wins for joints, immunity, skin, PCOD, anti-aging
+  if(has('hypertension') || has('heart')){
+    add('AVBT Juice', 100, 'Aloe vera + beetroot directly addresses blood pressure regulation, supports cardiovascular function and liver detoxification.');
+  } else if(has('joint') || has('arthritis') || has('pcod') || has('immunity') || has('skin')){
+    add('SBTC Juice', 100, 'Seabuckthorn + curcumin provides powerful anti-inflammatory and antioxidant support for joint health, immunity and skin wellness.');
+  } else if(has('liver') || has('detox') || has('digestion')){
+    add('AVBT Juice', 100, 'Aloe vera + beetroot supports liver detoxification, digestive health and cardiovascular function.');
   } else {
     add('SBTC Juice', 100, 'Seabuckthorn + curcumin provides powerful antioxidant and immunity support aligned with your health goals.');
   }
@@ -447,12 +452,16 @@ function selectSupplements(pd){
 
   // Row 11 & 12 - Joints (severity based)
   if(has('joint') || has('arthritis')){
-    if(visceralFat > 10 || (metabolicAge - actualAge) >= 5 || has('osteoarthritis')){
-      add('Joint Flexer', 95, 'Therapeutic formula for moderate-severe joint pain — reduces inflammation, restores mobility and suppresses swelling.');
+    if(visceralFat > 10 || (metabolicAge - actualAge) >= 5 || has('osteoarthritis') || bmi >= 30){
+      add('Joint Flexer', 98, 'ESSENTIAL for joint condition — therapeutic anti-inflammatory formula reduces joint pain, restores mobility and suppresses swelling. Visceral fat level and metabolic age confirm moderate-severe joint stress.');
     } else {
-      add('Ortho One', 90, 'Glucosamine, chondroitin and collagen complex for cartilage support and preventive joint care.');
+      add('Ortho One', 95, 'Glucosamine, chondroitin and collagen complex for cartilage support and preventive joint care.');
     }
-    add('Krill One', 65, 'Omega-3 EPA+DHA and astaxanthin reduce joint inflammation and support mobility.');
+    add('Krill One', 82, 'Omega-3 EPA+DHA and astaxanthin reduce joint inflammation and support cardiovascular health simultaneously.');
+    // SBTC for anti-inflammatory when joints + diabetes/hypertension
+    if(has('diabetes') || has('hypertension')){
+      add('SBTC Juice', 88, 'Seabuckthorn + curcumin reduces systemic inflammation affecting joints, liver health and provides antioxidant protection crucial for diabetic joint management.');
+    }
   }
 
   // Row 13 - Prostate
@@ -600,9 +609,12 @@ function selectSupplements(pd){
     }
   }
 
-  // Young Fuel trigger - metabolic age
-  if(age >= 40 || (metabolicAge - actualAge >= 3) || has('metabolic') || has('obesity')){
-    add('Young Fuel', 85, 'NMN and cellular energy support to address accelerated metabolic aging and restore cellular vitality.');
+  // Young Fuel trigger - metabolic age (only when age 50+ or significant metabolic aging)
+  // Do NOT prioritise over clinical condition supplements
+  if(age >= 50 || (metabolicAge - actualAge >= 5)){
+    add('Young Fuel', 72, 'NMN and cellular energy support to address accelerated metabolic aging and restore cellular vitality.');
+  } else if(age >= 40 || (metabolicAge - actualAge >= 3)){
+    add('Young Fuel', 65, 'NAD+ support for anti-aging and cellular energy — appropriate for age and metabolic profile.');
   }
 
   // Fitness One - always add for weight/obesity/metabolic/general health (safe as 6th)
