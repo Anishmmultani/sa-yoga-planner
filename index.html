@@ -841,7 +841,7 @@ async function generatePlan(){
     skelMuscle,skelMuscleRatio,proteinRatio,proteinMass,leanBodyMass,
     subcutFat,subcutFatMass,visceralFat,bmr,boneMass,bodyWater,totalBodyWater,
     heartRate,standardWeight,metabolicAge,activity,goal,
-    conditions:cleanConditions,notes,dietitian,mealPlan:is7day?"7day":"1day"};
+    conditions:cleanConditions,notes,dietitian,mealPlan:document.getElementById("meal-7day-chip").classList.contains("active")?"7day":"1day"};
 
   // Read meal plan directly from DOM chip state (more reliable than global var)
   const is7day = !document.getElementById('meal-1day-chip').classList.contains('active');
