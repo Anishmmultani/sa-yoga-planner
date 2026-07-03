@@ -1124,7 +1124,19 @@ async function exportPDF(){
       if(!trimmed){y+=2;continue;}
       const isHeader=((/^[1-8]\.\s+[A-Z]/.test(trimmed))&&trimmed===trimmed.toUpperCase())||/^[A-Z][A-Z\s&\-—:]{8,}$/.test(trimmed);
       const isBullet=/^[-•*]\s/.test(trimmed)||/^\d+[.):]\s/.test(trimmed);
-      if(isHeader){
+      if(isDayHeader){
+        checkY(14);y+=5;
+        // Day header - teal background white text
+        doc.setFillColor(15,76,76);
+        const dwl=doc.splitTextToSize(trimmed.toUpperCase(),contentW-10);
+        const dbh=dwl.length*6+7;
+        doc.roundedRect(margin,y,contentW,dbh,2,2,'F');
+        doc.setFillColor(201,168,76);doc.rect(margin,y+dbh-1.5,contentW,1.5,'F');
+        doc.setTextColor(255,255,255);doc.setFontSize(9);doc.setFont('helvetica','bold');
+        dwl.forEach((w,i)=>doc.text(w,margin+6,y+6+i*6));
+        y+=dbh+3;
+        doc.setTextColor(30,52,50);doc.setFontSize(8.5);doc.setFont('helvetica','normal');
+      } else if(isHeader){
         checkY(16);y+=4;
         doc.setFillColor(201,168,76);doc.setDrawColor(139,110,30);
         const wl=doc.splitTextToSize(trimmed,contentW-14);
