@@ -907,11 +907,11 @@ async function generatePlan(){
     '- [food and why]',
     '- [food and why]',
     '- [food and why]',
-    '8. WEEKLY MONITORING',
-    '- [metric]',
-    '- [metric]',
-    '- [metric]',
-    '- [metric]',
+    '8. WEEKLY MONITORING (MANDATORY - always include this section)',
+    '- Weight: [frequency and target]',
+    '- [metric 2]',
+    '- [metric 3]',
+    '- [metric 4]',
     'DIET_PLAN_END',
     '',
     'Indian diet compatible.'
@@ -933,6 +933,11 @@ async function generatePlan(){
     const fullText = data.text || 'No response.';
 
     // Process result
+    // Ensure weekly monitoring is always present
+    if(!fullText.includes('WEEKLY MONITORING') && !fullText.includes('Weekly Monitoring')){
+      fullText = fullText.replace('DIET_PLAN_END',
+        '8. WEEKLY MONITORING\n- Weight: Track weekly (same day, morning, fasted)\n- Blood pressure: Monitor twice weekly if on medication\n- Energy levels: Daily subjective rating 1-10\n- Compliance: Track meals per plan target\n\nDIET_PLAN_END');
+    }
     let cleanText = fullText
       .replace(/DIET_PLAN_START|DIET_PLAN_END|SUPPLEMENTS_START|SUPPLEMENTS_END/g,'')
       .replace(/PRODUCT:[\s\S]*$/,'')
