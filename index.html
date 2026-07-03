@@ -932,6 +932,8 @@ async function generatePlan(){
       .replace(/DIET_PLAN_START|DIET_PLAN_END|SUPPLEMENTS_START|SUPPLEMENTS_END/g,'')
       .replace(/PRODUCT:[\s\S]*$/,'')
       .replace(/\*\*/g,'')
+      .replace(/^#{1,3}\s/gm,'')
+      .replace(/\*/g,'')
       .trim();
     lastPlanText = cleanText;
 
@@ -1122,14 +1124,19 @@ async function exportPDF(){
     for(const line of lines){
       const trimmed=line.trim();
       if(!trimmed){y+=2;continue;}
-      const isDayHeader=/^DAY\s+\d/i.test(trimmed);
+      const trimmedClean=trimmed.replace(/^#+\s*/,'').replace(/\*\*/g,'').trim();
+      const isDayHeader=/^DAY\s*\d/i.test(trimmedClean)||/^---/.test(trimmed);
       const isHeader=((/^[1-8]\.\s+[A-Z]/.test(trimmed))&&trimmed===trimmed.toUpperCase())||/^[A-Z][A-Z\s&\-—:]{8,}$/.test(trimmed);
       const isBullet=/^[-•*]\s/.test(trimmed)||/^\d+[.):]\s/.test(trimmed);
       if(isDayHeader){
+        // Skip separator lines
+        if(/^---+$/.test(trimmed)){y+=3;continue;}
         checkY(14);y+=5;
-        // Day header - teal background white text
+        // Clean the day text - remove ### and ** 
+        const dayLabel=(trimmedClean||trimmed).replace(/^#+\s*/,'').replace(/\*\*/g,'').replace(/---/g,'').trim();
+        if(!dayLabel){continue;}
         doc.setFillColor(15,76,76);
-        const dwl=doc.splitTextToSize(trimmed.toUpperCase(),contentW-10);
+        const dwl=doc.splitTextToSize(dayLabel.toUpperCase(),contentW-10);
         const dbh=dwl.length*6+7;
         doc.roundedRect(margin,y,contentW,dbh,2,2,'F');
         doc.setFillColor(201,168,76);doc.rect(margin,y+dbh-1.5,contentW,1.5,'F');
