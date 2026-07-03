@@ -250,7 +250,7 @@ function toggleChip(checkbox){
 
 function getVal(id){const el=document.getElementById(id);return el?el.value.trim():'';}
 
-let mealPlanDuration='1day';
+let mealPlanDuration='7day';
 
 function setMealPlan(type){
   mealPlanDuration = type;
@@ -818,7 +818,7 @@ async function generatePlan(){
     return;
   }
   document.getElementById('goal-error').style.display='none';
-  setMealPlan('1day');
+  setMealPlan('7day');
 
   // Get all values
   const bmi=getVal('bmi'),bodyFat=getVal('bodyFat'),muscleMass=getVal('muscleMass'),muscleRate=getVal('muscleRate');
@@ -841,7 +841,12 @@ async function generatePlan(){
     skelMuscle,skelMuscleRatio,proteinRatio,proteinMass,leanBodyMass,
     subcutFat,subcutFatMass,visceralFat,bmr,boneMass,bodyWater,totalBodyWater,
     heartRate,standardWeight,metabolicAge,activity,goal,
-    conditions:cleanConditions,notes,dietitian,mealPlan:mealPlanDuration};
+    conditions:cleanConditions,notes,dietitian,mealPlan:is7day?"7day":"1day"};
+
+  // Read meal plan directly from DOM chip state (more reliable than global var)
+  const is7day = !document.getElementById('meal-1day-chip').classList.contains('active');
+  mealPlanDuration = is7day ? '7day' : '1day';
+  console.log('Meal plan duration at generate time:', mealPlanDuration);
 
   // UI setup
   const btn=document.getElementById('generateBtn');
@@ -959,7 +964,7 @@ function resetForm(){
     cb.closest('.condition-chip').classList.remove('active');
   });
   document.getElementById('goal-error').style.display='none';
-  setMealPlan('1day');
+  setMealPlan('7day');
   const sub=document.getElementById('womens-health-sub');
   if(sub) sub.style.display='none';
   const arrow=document.getElementById('womens-arrow');
@@ -1387,14 +1392,14 @@ async function exportPDF(){
 
   <div class="section-label">Meal plan duration</div>
   <div class="conditions-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0;">
-    <label class="condition-chip active" id="meal-1day-chip" onclick="setMealPlan(this.dataset.plan)" data-plan="1day">
+    <label class="condition-chip" id="meal-1day-chip" onclick="setMealPlan('1day')" >
       <div class="chip-icon">📋</div>
       <div>
         <span class="chip-label">1 Day Plan</span>
         <div style="font-size:11px;color:var(--teal-soft);">Quick · 4 pages</div>
       </div>
     </label>
-    <label class="condition-chip" id="meal-7day-chip" onclick="setMealPlan(this.dataset.plan)" data-plan="7day">
+    <label class="condition-chip active" id="meal-7day-chip" onclick="setMealPlan('7day')">
       <div class="chip-icon">📅</div>
       <div>
         <span class="chip-label">7 Day Plan</span>
