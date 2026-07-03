@@ -861,7 +861,7 @@ async function generatePlan(){
   const wConditions=conditions.filter(c=>womensConditions.includes(c));
   
   const prompt=[
-    'You are a clinical dietitian at S A Yoga Classes. Generate a personalised diet plan in English. '+(mealPlanDuration==="7day"?'For the 7-day meal plan be detailed with each day. Total under 2000 words.':'Keep each section brief. Total under 700 words.'),
+    'You are a clinical dietitian at S A Yoga Classes. Generate a personalised diet plan in English. '+(mealPlanDuration==="7day"?'For the 7-day meal plan you MUST complete ALL 7 days (Day 1 Monday through Day 7 Sunday). Keep each day brief - just 5 meals per day with food and portion. Total under 1500 words for the meal plan section.':'Keep each section brief. Total under 700 words.'),
     '',
     'CLIENT:',
     '- Name: '+patientName+', Age: '+age+'y, Sex: '+sex+', Height: '+height+'cm, Weight: '+weight+'kg'+(standardWeight?', Ideal weight: '+standardWeight+'kg':''),
@@ -1122,6 +1122,7 @@ async function exportPDF(){
     for(const line of lines){
       const trimmed=line.trim();
       if(!trimmed){y+=2;continue;}
+      const isDayHeader=/^DAY\s+\d/i.test(trimmed);
       const isHeader=((/^[1-8]\.\s+[A-Z]/.test(trimmed))&&trimmed===trimmed.toUpperCase())||/^[A-Z][A-Z\s&\-—:]{8,}$/.test(trimmed);
       const isBullet=/^[-•*]\s/.test(trimmed)||/^\d+[.):]\s/.test(trimmed);
       if(isDayHeader){
