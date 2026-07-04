@@ -935,7 +935,7 @@ async function generatePlan(){
     console.log('Response status:', response.status);
     const data = await response.json();
     console.log('Data received, text length:', data.text ? data.text.length : 0);
-    const fullText = data.text || 'No response.';
+    let fullText = data.text || 'No response.';
 
     // Process result
     // Ensure weekly monitoring is always present
