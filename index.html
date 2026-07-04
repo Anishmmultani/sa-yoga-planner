@@ -267,6 +267,10 @@ let lastSupplements=[];
 function selectSupplements(pd){
   const conditions = pd.conditions || [];
   const goals = (pd.goal || '').toLowerCase();
+  const notes = (pd.notes || '').toLowerCase();
+  
+  // notes-based keyword detection — catches finer clinical points not in chips
+  const noteHas = (kw) => notes.includes(kw.toLowerCase());
   const age = parseInt(pd.age) || 0;
   const visceralFat = parseFloat(pd.visceralFat) || 0;
   const metabolicAge = parseInt(pd.metabolicAge) || 0;
@@ -275,11 +279,12 @@ function selectSupplements(pd){
   const bodyFat = parseFloat(pd.bodyFat) || 0;
   const sex = (pd.sex || '').toLowerCase();
 
-  const has = (c) => conditions.some(x => x.toLowerCase().includes(c.toLowerCase()));
+  const has = (c) => conditions.some(x => x.toLowerCase().includes(c.toLowerCase())) || noteHas(c);
   
   // Pre-calculate severity flags used across multiple rules
   const hasSevereCondition = ()=> has('diabetes') || has('hypertension') || has('heart') || 
-    has('kidney') || has('liver') || has('joints') || has('arthritis') || has('thyroid') || has('cancer');
+    has('kidney') || has('kidney_stone') || has('liver') || has('joints') || has('arthritis') || 
+    has('thyroid') || has('cancer') || has('anemia') || has('anaemia');
   const wantsWeight = goals.includes('fat') || goals.includes('weight') || goals.includes('recomp') || goals.includes('lean');
   const wantsAntiAging = goals.includes('anti') || goals.includes('longevity') || goals.includes('aging');
   const wantsEnergy = goals.includes('energy') || goals.includes('stamina');
@@ -1466,12 +1471,24 @@ async function exportPDF(){
     <label class="condition-chip"><input type="checkbox" value="diabetes" onchange="toggleChip(this)"/><div class="chip-icon">🩸</div><span class="chip-label">Diabetes / insulin resistance</span></label>
     <label class="condition-chip"><input type="checkbox" value="hypertension" onchange="toggleChip(this)"/><div class="chip-icon">❤️</div><span class="chip-label">Hypertension</span></label>
     <label class="condition-chip"><input type="checkbox" value="thyroid" onchange="toggleChip(this)"/><div class="chip-icon">🛡️</div><span class="chip-label">Thyroid disorders</span></label>
-    <label class="condition-chip"><input type="checkbox" value="kidney" onchange="toggleChip(this)"/><div class="chip-icon">🫘</div><span class="chip-label">Kidney disease</span></label>
+    <label class="condition-chip"><input type="checkbox" value="kidney_stone" onchange="toggleChip(this)"/><div class="chip-icon">🫘</div><span class="chip-label">Kidney stones</span></label>
+    <label class="condition-chip"><input type="checkbox" value="kidney" onchange="toggleChip(this)"/><div class="chip-icon">🫘</div><span class="chip-label">Kidney disease / CKD</span></label>
     <label class="condition-chip"><input type="checkbox" value="obesity" onchange="toggleChip(this)"/><div class="chip-icon">⚖️</div><span class="chip-label">Obesity / metabolic syndrome</span></label>
     <label class="condition-chip"><input type="checkbox" value="liver" onchange="toggleChip(this)"/><div class="chip-icon">🟤</div><span class="chip-label">Liver / fatty liver</span></label>
     <label class="condition-chip"><input type="checkbox" value="joints" onchange="toggleChip(this)"/><div class="chip-icon">🦴</div><span class="chip-label">Joints / arthritis</span></label>
     <label class="condition-chip"><input type="checkbox" value="digestion" onchange="toggleChip(this)"/><div class="chip-icon">🫃</div><span class="chip-label">Gut / digestion / constipation</span></label>
     <label class="condition-chip"><input type="checkbox" value="piles" onchange="toggleChip(this)"/><div class="chip-icon">🔴</div><span class="chip-label">Piles / hemorrhoids</span></label>
+    <label class="condition-chip"><input type="checkbox" value="cholesterol" onchange="toggleChip(this)"/><div class="chip-icon">🧪</div><span class="chip-label">High cholesterol</span></label>
+    <label class="condition-chip"><input type="checkbox" value="uric_acid" onchange="toggleChip(this)"/><div class="chip-icon">🦶</div><span class="chip-label">Uric acid / Gout</span></label>
+    <label class="condition-chip"><input type="checkbox" value="anemia" onchange="toggleChip(this)"/><div class="chip-icon">🩸</div><span class="chip-label">Anaemia / Low haemoglobin</span></label>
+    <label class="condition-chip"><input type="checkbox" value="insomnia" onchange="toggleChip(this)"/><div class="chip-icon">😴</div><span class="chip-label">Insomnia / Poor sleep</span></label>
+    <label class="condition-chip"><input type="checkbox" value="anxiety" onchange="toggleChip(this)"/><div class="chip-icon">🧠</div><span class="chip-label">Anxiety / Stress / Depression</span></label>
+    <label class="condition-chip"><input type="checkbox" value="hair_loss" onchange="toggleChip(this)"/><div class="chip-icon">💇</div><span class="chip-label">Hair loss / Hair fall</span></label>
+    <label class="condition-chip"><input type="checkbox" value="skin" onchange="toggleChip(this)"/><div class="chip-icon">✨</div><span class="chip-label">Skin issues / Acne / Dullness</span></label>
+    <label class="condition-chip"><input type="checkbox" value="lungs" onchange="toggleChip(this)"/><div class="chip-icon">🫁</div><span class="chip-label">Lung / Respiratory issues</span></label>
+    <label class="condition-chip"><input type="checkbox" value="eye" onchange="toggleChip(this)"/><div class="chip-icon">👁️</div><span class="chip-label">Eye health / Vision</span></label>
+    <label class="condition-chip"><input type="checkbox" value="cancer" onchange="toggleChip(this)"/><div class="chip-icon">🎗️</div><span class="chip-label">Cancer / Post-chemo support</span></label>
+    <label class="condition-chip"><input type="checkbox" value="uti" onchange="toggleChip(this)"/><div class="chip-icon">🚽</div><span class="chip-label">UTI / Urinary tract issues</span></label>
     <label class="condition-chip" id="womens-health-chip" onclick="toggleWomensHealth(event)"><div class="chip-icon">👩</div><span class="chip-label">Women's health</span><span style="margin-left:auto;font-size:11px;color:var(--teal-soft);" id="womens-arrow">▼</span></label>
     <label class="condition-chip"><input type="checkbox" value="none" onchange="toggleChip(this)"/><div class="chip-icon">✅</div><span class="chip-label">General healthy population</span></label>
   </div>
