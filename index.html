@@ -924,8 +924,8 @@ async function generatePlan(){
     '- [metric 4]',
     'DIET_PLAN_END',
     '',
-    'Indian diet compatible.'
-  ].join('\n');
+    'Indian diet compatible.',
+    (uploadedReports&&uploadedReports.length)?'MEDICAL REPORTS ATTACHED ('+uploadedReports.length+' file(s)): '+uploadedReports.map(function(r){return r.name;}).join(', ')+'. YOU MUST: (1) Read all lab values from attached report(s). (2) In CLINICAL ASSESSMENT section list every key value with result and HIGH/LOW/NORMAL status. (3) Base diet and supplement recommendations on actual report values. (4) Mention specific values in reasoning. (5) Address conditions found in report even if chip not selected.':'' ].join('\n');
 
   console.log('Prompt length:', prompt.length);
   console.log('Sending to backend...');
@@ -943,6 +943,7 @@ async function generatePlan(){
       }));
       console.log('Sending', reqBody.reports.length, 'medical report(s)');
     }
+    console.log('Reports at generate time:', uploadedReports ? uploadedReports.length : 0, uploadedReports ? uploadedReports.map(r=>r.name) : []);
     const response = await fetch('https://sa-yoga-backend.onrender.com/generate',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -1017,9 +1018,11 @@ function handleReportUpload(input){
     preview.innerHTML = uploadedReports.map(r => 
       `<div style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--teal-soft);border-radius:20px;padding:4px 10px;margin:3px;">
         <span>📄</span><span style="font-size:12px;">${r.name}</span>
+        <span style="color:var(--gray-600);font-size:10px;margin-left:2px;">${Math.round(r.base64.length*0.75/1024)}KB</span>
         <span style="cursor:pointer;color:var(--danger);font-weight:700;" onclick="removeReport('${r.name}')">✕</span>
       </div>`
-    ).join('') + '<div style="margin-top:6px;font-size:11px;color:var(--success);">✅ Report(s) ready — will be analysed with BIA data</div>';
+    ).join('') + '<div style="margin-top:8px;padding:8px;background:#d4f0e0;border-radius:8px;font-size:12px;color:var(--success);font-weight:600;">✅ '+uploadedReports.length+' report(s) loaded and ready. Click Generate to analyse.</div>';
+  console.log('Reports loaded:', uploadedReports.length, uploadedReports.map(r=>r.name+' '+Math.round(r.base64.length*0.75/1024)+'KB'));
   }).catch(() => {
     preview.innerHTML = '<div style="color:var(--danger);">Error reading file. Please try again.</div>';
   });
