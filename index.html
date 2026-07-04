@@ -829,6 +829,11 @@ async function generatePlan(){
   }
   document.getElementById('goal-error').style.display='none';
   setMealPlan('7day');
+  uploadedReports = [];
+  const rp = document.getElementById('reportPreview');
+  if(rp) rp.innerHTML = '';
+  const rf = document.getElementById('reportFile');
+  if(rf) rf.value = '';
 
   // Get all values
   const bmi=getVal('bmi'),bodyFat=getVal('bodyFat'),muscleMass=getVal('muscleMass'),muscleRate=getVal('muscleRate');
@@ -973,6 +978,58 @@ async function generatePlan(){
   btn.innerHTML='✦ Generate diet plan + supplement recommendations';
 }
 
+
+// ── MEDICAL REPORT HANDLING ──
+let uploadedReports = []; // stores {name, base64, mediaType}
+
+function handleReportUpload(input){
+  const files = Array.from(input.files);
+  if(!files.length) return;
+  
+  const preview = document.getElementById('reportPreview');
+  preview.innerHTML = '<div style="color:var(--teal-soft);">Reading reports...</div>';
+  uploadedReports = [];
+  
+  const promises = files.map(file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      const mediaType = file.type || 'application/pdf';
+      uploadedReports.push({name: file.name, base64, mediaType});
+      resolve();
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  }));
+  
+  Promise.all(promises).then(() => {
+    preview.innerHTML = uploadedReports.map(r => 
+      `<div style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--teal-soft);border-radius:20px;padding:4px 10px;margin:3px;">
+        <span>📄</span><span style="font-size:12px;">${r.name}</span>
+        <span style="cursor:pointer;color:var(--danger);font-weight:700;" onclick="removeReport('${r.name}')">✕</span>
+      </div>`
+    ).join('') + '<div style="margin-top:6px;font-size:11px;color:var(--success);">✅ Report(s) ready — will be analysed with BIA data</div>';
+  }).catch(() => {
+    preview.innerHTML = '<div style="color:var(--danger);">Error reading file. Please try again.</div>';
+  });
+}
+
+function removeReport(name){
+  uploadedReports = uploadedReports.filter(r => r.name !== name);
+  const preview = document.getElementById('reportPreview');
+  if(!uploadedReports.length){
+    preview.innerHTML = '';
+    document.getElementById('reportFile').value = '';
+  } else {
+    // Re-render
+    preview.innerHTML = uploadedReports.map(r => 
+      `<div style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--teal-soft);border-radius:20px;padding:4px 10px;margin:3px;">
+        <span>📄</span><span style="font-size:12px;">${r.name}</span>
+        <span style="cursor:pointer;color:var(--danger);font-weight:700;" onclick="removeReport('${r.name}')">✕</span>
+      </div>`
+    ).join('');
+  }
+}
 
 function resetForm(){
   document.querySelectorAll('input[type="text"],input[type="number"],textarea').forEach(el=>el.value='');
@@ -1508,6 +1565,20 @@ async function exportPDF(){
 
   <div class="section-label">Additional notes (optional)</div>
   <div class="field"><textarea id="notes" rows="2" placeholder="Allergies, food preferences, medications, or special instructions..."></textarea></div>
+
+  <!-- Medical Report Upload -->
+  <div class="section-label">Medical reports (optional — PDF or image)</div>
+  <div style="background:var(--teal-light);border:2px dashed var(--teal-soft);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+    <div style="font-size:13px;color:var(--teal);margin-bottom:10px;">
+      📋 Upload blood report, lipid profile, thyroid panel, kidney/liver function test etc.<br/>
+      <span style="font-size:11px;color:var(--teal-soft);">AI will read the values and factor them into the plan + supplement recommendations</span>
+    </div>
+    <label style="cursor:pointer;display:inline-block;">
+      <input type="file" id="reportFile" accept=".pdf,image/*" multiple onchange="handleReportUpload(this)" style="display:none;"/>
+      <span class="condition-chip active" style="cursor:pointer;padding:8px 16px;display:inline-block;">📎 Select Report(s)</span>
+    </label>
+    <div id="reportPreview" style="margin-top:10px;font-size:12px;color:var(--teal);"></div>
+  </div>
 
   <button class="generate-btn" id="generateBtn" onclick="generatePlan()">✦ Generate diet plan + supplement recommendations</button>
   <div class="error-msg" id="errorMsg">Please fill in patient name, age, sex, height, and weight before generating.</div>
