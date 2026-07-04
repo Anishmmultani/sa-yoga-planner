@@ -932,10 +932,21 @@ async function generatePlan(){
 
   try{
     btn.innerHTML='<div class="spinner"></div> Connecting...';
+    // Include uploaded reports if any
+    const reqBody = {prompt: prompt};
+    if(uploadedReports && uploadedReports.length > 0){
+      reqBody.reports = uploadedReports.map(r => ({
+        type: r.mediaType && r.mediaType.startsWith('image') ? 'image' : 'document',
+        mediaType: r.mediaType || 'application/pdf',
+        base64: r.base64,
+        name: r.name
+      }));
+      console.log('Sending', reqBody.reports.length, 'medical report(s)');
+    }
     const response = await fetch('https://sa-yoga-backend.onrender.com/generate',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({prompt:prompt})
+      body:JSON.stringify(reqBody)
     });
     console.log('Response status:', response.status);
     const data = await response.json();
@@ -1138,7 +1149,8 @@ async function exportPDF(){
     doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(74,104,101);
     cardRows.forEach((row,i)=>doc.text(row,margin+7,y+14+(i*7),{maxWidth:contentW-14}));
     doc.setTextColor(201,168,76);doc.setFont('helvetica','bold');
-    const r4x=(pd.dietitian?'Prepared by: '+pd.dietitian+'  |  ':'')+'S A Yoga Classes'+(pd.mealPlan==='7day'?'  |  7-Day Meal Plan':'  |  1-Day Meal Plan');
+    const reportStr=(pd.reportNames&&pd.reportNames.length)?'  |  Reports: '+pd.reportNames.join(', '):'';
+    const r4x=(pd.dietitian?'Prepared by: '+pd.dietitian+'  |  ':'')+'S A Yoga Classes'+(pd.mealPlan==='7day'?'  |  7-Day Meal Plan':'  |  1-Day Meal Plan')+reportStr;
     doc.text(r4x,margin+7,y+cardH-3,{maxWidth:contentW-14});
     y+=cardH+6;
 
