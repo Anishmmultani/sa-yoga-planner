@@ -956,6 +956,13 @@ async function generatePlan(){
       .replace(/\*/g,'')
       .replace(/½/g,'1/2').replace(/¼/g,'1/4').replace(/¾/g,'3/4')
       .replace(/—/g,'-').replace(/–/g,'-')
+      .replace(/µ/g,'u').replace(/μ/g,'u')
+      .replace(/≥/g,'>=').replace(/≤/g,'<=')
+      .replace(/³/g,'3').replace(/²/g,'2')
+      .replace(/→/g,'->').replace(/←/g,'<-')
+      .replace(/°/g,' deg ')
+      .replace(/×/g,'x')
+      .replace(/[^\x00-\x7F]/g,'') // strip any remaining non-ASCII chars jsPDF's base font can't measure
       .trim();
     lastPlanText = cleanText;
 
