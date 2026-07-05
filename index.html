@@ -994,34 +994,46 @@ let uploadedReports = []; // stores {name, base64, mediaType}
 function handleReportUpload(input){
   const files = Array.from(input.files);
   if(!files.length) return;
-  
   const preview = document.getElementById('reportPreview');
   preview.innerHTML = '<div style="color:var(--teal-soft);">Reading reports...</div>';
   uploadedReports = [];
-  
   const promises = files.map(file => new Promise((resolve, reject) => {
+    // Warn if file is very large
+    if(file.size > 5 * 1024 * 1024){
+      console.warn('Large file:', file.name, Math.round(file.size/1024/1024)+'MB');
+    }
     const reader = new FileReader();
     reader.onload = e => {
-      const base64 = e.target.result.split(',')[1];
-      const mediaType = file.type || 'application/pdf';
-      uploadedReports.push({name: file.name, base64, mediaType});
+      const dataUrl = e.target.result;
+      const base64 = dataUrl.split(',')[1];
+      // Detect type properly
+      const isImage = file.type.startsWith('image/');
+      const mediaType = isImage ? file.type : 'application/pdf';
+      const type = isImage ? 'image' : 'document';
+      const sizeKB = Math.round(base64.length * 0.75 / 1024);
+      uploadedReports.push({name:file.name, base64, mediaType, type, sizeKB});
       resolve();
     };
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('Failed to read ' + file.name));
     reader.readAsDataURL(file);
   }));
-  
   Promise.all(promises).then(() => {
-    preview.innerHTML = uploadedReports.map(r => 
-      `<div style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--teal-soft);border-radius:20px;padding:4px 10px;margin:3px;">
-        <span>📄</span><span style="font-size:12px;">${r.name}</span>
-        <span style="color:var(--gray-600);font-size:10px;margin-left:2px;">${Math.round(r.base64.length*0.75/1024)}KB</span>
-        <span style="cursor:pointer;color:var(--danger);font-weight:700;" onclick="removeReport('${r.name}')">✕</span>
-      </div>`
-    ).join('') + '<div style="margin-top:8px;padding:8px;background:#d4f0e0;border-radius:8px;font-size:12px;color:var(--success);font-weight:600;">✅ '+uploadedReports.length+' report(s) loaded and ready. Click Generate to analyse.</div>';
-  console.log('Reports loaded:', uploadedReports.length, uploadedReports.map(r=>r.name+' '+Math.round(r.base64.length*0.75/1024)+'KB'));
-  }).catch(() => {
-    preview.innerHTML = '<div style="color:var(--danger);">Error reading file. Please try again.</div>';
+    const totalKB = uploadedReports.reduce((s,r)=>s+r.sizeKB,0);
+    const sizeWarning = totalKB > 10000 ?
+      '<div style="margin-top:6px;padding:6px 10px;background:#fef3cd;border-radius:6px;font-size:11px;color:var(--warning);">⚠ Large files ('+Math.round(totalKB/1024)+'MB total) may take longer to process. If it times out, try uploading one report at a time.</div>' : '';
+    preview.innerHTML = uploadedReports.map(r =>
+      '<div style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--teal-soft);border-radius:20px;padding:4px 10px;margin:3px;">'+
+        '<span>'+(r.type==='image'?'🖼️':'📄')+'</span>'+
+        '<span style="font-size:12px;">'+r.name+'</span>'+
+        '<span style="color:var(--gray-600);font-size:10px;">'+r.sizeKB+'KB</span>'+
+        '<span style="cursor:pointer;color:var(--danger);font-weight:700;" data-name="'+r.name+'" onclick="removeReport(this.dataset.name)">✕</span>'+
+      '</div>'
+    ).join('') +
+    '<div style="margin-top:8px;padding:8px;background:#d4f0e0;border-radius:8px;font-size:12px;color:var(--success);font-weight:600;">✅ '+uploadedReports.length+' report(s) loaded ('+Math.round(totalKB/1024*10)/10+'MB). Click Generate to analyse.</div>' +
+    sizeWarning;
+    console.log('Reports loaded:', uploadedReports.map(r=>r.name+' '+r.sizeKB+'KB type:'+r.type));
+  }).catch(err => {
+    preview.innerHTML = '<div style="color:var(--danger);">Error: '+err.message+'</div>';
   });
 }
 
@@ -1032,13 +1044,16 @@ function removeReport(name){
     preview.innerHTML = '';
     document.getElementById('reportFile').value = '';
   } else {
-    // Re-render
-    preview.innerHTML = uploadedReports.map(r => 
-      `<div style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--teal-soft);border-radius:20px;padding:4px 10px;margin:3px;">
-        <span>📄</span><span style="font-size:12px;">${r.name}</span>
-        <span style="cursor:pointer;color:var(--danger);font-weight:700;" onclick="removeReport('${r.name}')">✕</span>
-      </div>`
-    ).join('');
+    const totalKB = uploadedReports.reduce((s,r)=>s+r.sizeKB,0);
+    preview.innerHTML = uploadedReports.map(r =>
+      '<div style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--teal-soft);border-radius:20px;padding:4px 10px;margin:3px;">'+
+        '<span>'+(r.type==='image'?'🖼️':'📄')+'</span>'+
+        '<span style="font-size:12px;">'+r.name+'</span>'+
+        '<span style="color:var(--gray-600);font-size:10px;">'+r.sizeKB+'KB</span>'+
+        '<span style="cursor:pointer;color:var(--danger);font-weight:700;" data-name="'+r.name+'" onclick="removeReport(this.dataset.name)">✕</span>'+
+      '</div>'
+    ).join('') +
+    '<div style="margin-top:6px;font-size:12px;color:var(--success);">'+uploadedReports.length+' report(s) — '+Math.round(totalKB/1024*10)/10+'MB</div>';
   }
 }
 
